@@ -1,0 +1,2581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SAP MDG — Process Modeling · Deep Dive</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,800&family=JetBrains+Mono:wght@400;500;600&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1419;
+    --bg-2: #161b22;
+    --bg-3: #1c2330;
+    --bg-4: #232b3a;
+    --ink: #e8e6e0;
+    --ink-2: #a8a89c;
+    --ink-3: #6b6f78;
+    --accent: #d97757;
+    --accent-2: #e8b059;
+    --accent-3: #7cb1a8;
+    --accent-4: #c084ce;
+    --accent-5: #6b9bd1;
+    --line: rgba(232, 230, 224, 0.08);
+    --line-2: rgba(232, 230, 224, 0.15);
+    --code-bg: #0a0d12;
+    --success: #7cb1a8;
+    --warn: #e8b059;
+    --danger: #d97757;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter Tight', sans-serif;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 60px 32px 120px;
+  }
+
+  /* ===== Header ===== */
+  header.hero {
+    border-bottom: 1px solid var(--line-2);
+    padding-bottom: 48px;
+    margin-bottom: 56px;
+  }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .eyebrow::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    max-width: 200px;
+  }
+  h1.title {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-size: clamp(42px, 6vw, 72px);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    margin-bottom: 24px;
+  }
+  h1.title em {
+    font-style: italic;
+    color: var(--accent-2);
+    font-weight: 400;
+  }
+  .subtitle {
+    font-size: 18px;
+    color: var(--ink-2);
+    max-width: 760px;
+    line-height: 1.6;
+  }
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 24px;
+    margin-top: 40px;
+    padding-top: 32px;
+    border-top: 1px dashed var(--line-2);
+  }
+  .meta-item .meta-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--ink-3);
+    margin-bottom: 6px;
+  }
+  .meta-item .meta-value {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    color: var(--ink);
+  }
+
+  /* ===== TOC ===== */
+  .toc {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 28px 32px;
+    margin-bottom: 64px;
+  }
+  .toc-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 18px;
+  }
+  .toc ol {
+    list-style: none;
+    counter-reset: toc;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 4px 32px;
+  }
+  .toc li {
+    counter-increment: toc;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .toc li::before {
+    content: counter(toc, decimal-leading-zero);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    margin-right: 14px;
+  }
+  .toc a {
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 15px;
+    transition: color 0.2s;
+  }
+  .toc a:hover { color: var(--accent-2); }
+
+  /* ===== Sections ===== */
+  section {
+    margin-bottom: 120px;
+    scroll-margin-top: 24px;
+  }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+  }
+  h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(30px, 4.5vw, 46px);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    flex: 1;
+  }
+  .section-subtitle {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--accent-2);
+    font-size: 18px;
+    margin-bottom: 36px;
+  }
+
+  /* sub-section blocks */
+  .sub-block {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 28px 32px;
+    margin: 24px 0;
+  }
+  .sub-block-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line-2);
+  }
+  .sub-block-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .sub-block-icon.what { background: var(--accent-2); }
+  .sub-block-icon.why { background: var(--accent-3); }
+  .sub-block-icon.use { background: var(--accent-4); }
+  .sub-block-icon.link { background: var(--accent-5); }
+  .sub-block-icon.config { background: var(--accent); }
+  .sub-block-icon.fields { background: var(--accent-2); }
+  .sub-block-icon.warn { background: var(--danger); }
+  .sub-block-icon.real { background: var(--accent-3); }
+  .sub-block-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .sub-block h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 22px;
+    margin: 0;
+    color: var(--ink);
+  }
+  .sub-block p { margin-bottom: 12px; color: var(--ink); line-height: 1.7; }
+  .sub-block p:last-child { margin-bottom: 0; }
+
+  h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 26px;
+    letter-spacing: -0.01em;
+    margin: 40px 0 16px;
+    color: var(--ink);
+  }
+  h4 {
+    font-family: 'Inter Tight', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent-2);
+    margin: 28px 0 12px;
+  }
+  p { margin-bottom: 16px; color: var(--ink); }
+  p.lead {
+    font-size: 19px;
+    line-height: 1.6;
+    color: var(--ink);
+    margin-bottom: 28px;
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+  }
+
+  /* ===== Real-life analogy ===== */
+  .analogy {
+    background: linear-gradient(135deg, rgba(124, 177, 168, 0.08), rgba(192, 132, 206, 0.04));
+    border: 1px dashed var(--accent-3);
+    border-radius: 6px;
+    padding: 26px 30px;
+    margin: 28px 0;
+    position: relative;
+  }
+  .analogy::before {
+    content: '🌐 REAL-LIFE PARALLEL';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: var(--bg);
+    padding: 0 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--accent-3);
+  }
+  .analogy p { margin-bottom: 10px; }
+  .analogy p:last-child { margin-bottom: 0; }
+
+  /* ===== What-if-not box ===== */
+  .what-if {
+    background: rgba(217, 119, 87, 0.06);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    padding: 20px 26px;
+    margin: 24px 0;
+  }
+  .what-if::before {
+    content: '⚠  WHAT IF THIS DIDN\'T EXIST?';
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  /* ===== Code/Path ===== */
+  code, .path {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: var(--code-bg);
+    color: var(--accent-2);
+    padding: 2px 7px;
+    border-radius: 3px;
+    border: 1px solid var(--line);
+  }
+  .path-block {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: var(--code-bg);
+    padding: 18px 22px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    color: var(--ink-2);
+    margin: 16px 0;
+    overflow-x: auto;
+    line-height: 1.9;
+  }
+  .path-block .arrow { color: var(--accent); margin: 0 8px; }
+  .path-block .terminal { color: var(--accent-2); }
+  .path-block .start { color: var(--accent-3); }
+
+  /* ===== Pill/Tag ===== */
+  .pill {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 11px;
+    border-radius: 20px;
+    background: rgba(217, 119, 87, 0.12);
+    color: var(--accent);
+    border: 1px solid rgba(217, 119, 87, 0.3);
+    margin: 4px 4px 4px 0;
+  }
+  .pill.teal { background: rgba(124, 177, 168, 0.12); color: var(--accent-3); border-color: rgba(124, 177, 168, 0.3); }
+  .pill.amber { background: rgba(232, 176, 89, 0.12); color: var(--accent-2); border-color: rgba(232, 176, 89, 0.3); }
+  .pill.mauve { background: rgba(192, 132, 206, 0.12); color: var(--accent-4); border-color: rgba(192, 132, 206, 0.3); }
+  .pill.blue { background: rgba(107, 155, 209, 0.12); color: var(--accent-5); border-color: rgba(107, 155, 209, 0.3); }
+
+  /* ===== Field table - the star of this version ===== */
+  .field-table {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    margin: 20px 0;
+    overflow: hidden;
+  }
+  .field-table-head {
+    background: var(--bg-3);
+    padding: 14px 22px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent-2);
+    border-bottom: 1px solid var(--line-2);
+  }
+  .field-row {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .field-row:last-child { border-bottom: none; }
+  .field-row:hover { background: var(--bg-3); }
+  .field-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent-2);
+    font-weight: 500;
+  }
+  .field-name .required {
+    color: var(--danger);
+    margin-left: 4px;
+  }
+  .field-desc {
+    color: var(--ink);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .field-desc strong { color: var(--accent-2); }
+  .field-desc .example {
+    display: block;
+    margin-top: 6px;
+    color: var(--ink-2);
+    font-size: 13px;
+    font-style: italic;
+  }
+  @media (max-width: 700px) {
+    .field-row { grid-template-columns: 1fr; gap: 8px; }
+  }
+
+  /* ===== Linkage diagram ===== */
+  .diagram-container {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 32px;
+    margin: 28px 0;
+    overflow-x: auto;
+  }
+  .diagram-container svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+  .diagram-caption {
+    text-align: center;
+    color: var(--ink-3);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    margin-top: 16px;
+  }
+
+  /* ===== Tables ===== */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 24px 0;
+    font-size: 14px;
+  }
+  thead { background: var(--bg-3); }
+  th {
+    text-align: left;
+    padding: 14px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-2);
+    border-bottom: 1px solid var(--line-2);
+  }
+  td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink);
+    vertical-align: top;
+  }
+  tbody tr:hover { background: var(--bg-2); }
+  td code { font-size: 12px; }
+
+  /* ===== Lists ===== */
+  ul.bullet, ol.numbered {
+    margin: 16px 0 20px;
+    padding-left: 28px;
+  }
+  ul.bullet li, ol.numbered li {
+    margin-bottom: 12px;
+    color: var(--ink);
+    line-height: 1.7;
+  }
+  ul.bullet li::marker { color: var(--accent); }
+  ol.numbered li::marker { color: var(--accent); font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+
+  /* ===== Note callout ===== */
+  .note {
+    background: rgba(232, 176, 89, 0.07);
+    border: 1px solid rgba(232, 176, 89, 0.2);
+    padding: 18px 22px;
+    border-radius: 6px;
+    margin: 20px 0;
+    font-size: 14.5px;
+  }
+  .note strong { color: var(--accent-2); }
+  .note.tip {
+    background: rgba(124, 177, 168, 0.07);
+    border-color: rgba(124, 177, 168, 0.2);
+  }
+  .note.tip strong { color: var(--accent-3); }
+
+  /* ===== Where-it-stands flow ===== */
+  .position-flow {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 28px;
+    margin: 28px 0;
+  }
+  .position-flow-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent-4);
+    margin-bottom: 18px;
+    text-align: center;
+  }
+
+  /* ===== Accordion ===== */
+  .accordion-item {
+    border-bottom: 1px solid var(--line);
+  }
+  .accordion-header {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--ink);
+    padding: 20px 4px;
+    text-align: left;
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: color 0.2s;
+  }
+  .accordion-header:hover { color: var(--accent-2); }
+  .accordion-icon {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    color: var(--accent);
+    transition: transform 0.3s;
+    flex-shrink: 0;
+    margin-left: 12px;
+  }
+  .accordion-item.open .accordion-icon { transform: rotate(45deg); }
+  .accordion-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease, padding 0.5s ease;
+  }
+  .accordion-item.open .accordion-body {
+    max-height: 5000px;
+    padding: 4px 4px 28px;
+  }
+
+  /* ===== Progress bar ===== */
+  .progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    width: 0%;
+    z-index: 1000;
+    transition: width 0.1s;
+  }
+
+  /* ===== Term highlight ===== */
+  .term {
+    color: var(--accent-2);
+    font-weight: 500;
+    border-bottom: 1px dotted var(--accent-2);
+  }
+
+  /* ===== Footer ===== */
+  footer {
+    margin-top: 80px;
+    padding-top: 40px;
+    border-top: 1px solid var(--line-2);
+    text-align: center;
+    color: var(--ink-3);
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  kbd {
+    background: var(--bg-3);
+    border: 1px solid var(--line-2);
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-2);
+  }
+
+  /* mini stage indicator */
+  .stage-strip {
+    display: flex;
+    gap: 4px;
+    margin: 16px 0 24px;
+    overflow-x: auto;
+    padding: 4px 0;
+  }
+  .stage-pip {
+    flex: 1;
+    min-width: 90px;
+    padding: 10px 12px;
+    background: var(--bg-3);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--ink-3);
+    text-transform: uppercase;
+  }
+  .stage-pip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg);
+  }
+
+  /* ===== Configure steps ===== */
+  .config-steps {
+    counter-reset: cstep;
+    margin: 20px 0;
+  }
+  .config-step {
+    counter-increment: cstep;
+    background: var(--bg-3);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 20px 24px 20px 70px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .config-step::before {
+    content: counter(cstep);
+    position: absolute;
+    left: 20px;
+    top: 18px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .config-step h5 {
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    margin-bottom: 8px;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .config-step p { margin-bottom: 6px; font-size: 14px; }
+  .config-step p:last-child { margin-bottom: 0; }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<div class="wrap">
+
+  <!-- ============ HERO ============ -->
+  <header class="hero">
+    <div class="eyebrow">SAP MDG · Process Modeling · Deep Dive Edition</div>
+    <h1 class="title">The Complete Field-by-Field Guide to <em>Change Requests, Workflow &amp; Process Modeling</em></h1>
+    <p class="subtitle">Every concept explained from scratch — what it is, why it exists, where it lives in the CR flow, what fields you fill while configuring it, how it links to other pieces, what happens if it didn't exist, and a real-world parallel to make it stick.</p>
+
+    <div class="meta-grid">
+      <div class="meta-item">
+        <div class="meta-label">Coverage</div>
+        <div class="meta-value">9 deep modules</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Approach</div>
+        <div class="meta-value">Field-level detail</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Style</div>
+        <div class="meta-value">Plain English</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Best for</div>
+        <div class="meta-value">Configuration &amp; exams</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ TOC ============ -->
+  <nav class="toc">
+    <div class="toc-title">Deep Dive Modules</div>
+    <ol>
+      <li><a href="#s1">Governance Scope</a></li>
+      <li><a href="#s2">Change Request</a></li>
+      <li><a href="#s3">Change Request Header</a></li>
+      <li><a href="#s4">Logical Action</a></li>
+      <li><a href="#s5">Business Activity</a></li>
+      <li><a href="#s6">Change Request Type</a></li>
+      <li><a href="#s7">Change Request Steps</a></li>
+      <li><a href="#s8">Change Request Actions</a></li>
+      <li><a href="#s9">Step Types</a></li>
+      <li><a href="#s10">UI Determination &amp; Editions</a></li>
+      <li><a href="#s11">Workflow — Sequential &amp; Parallel</a></li>
+      <li><a href="#s12">The Big Picture · Full Chain</a></li>
+    </ol>
+  </nav>
+
+  <!-- ============ MASTER MAP ============ -->
+  <section style="margin-bottom:80px;">
+    <h3 style="margin-top:0;">The chain of concepts — at a glance</h3>
+    <p style="color:var(--ink-2);">Before diving deep, here is how every concept fits together. Read top-to-bottom: this is the order in which the system uses these pieces when a user creates a change request.</p>
+    <div class="diagram-container">
+      <svg viewBox="0 0 900 480" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#d97757"/>
+          </marker>
+        </defs>
+
+        <!-- Data Model (foundation) -->
+        <rect x="350" y="20" width="200" height="50" rx="6" fill="#1c2330" stroke="#6b9bd1" stroke-width="1.5"/>
+        <text x="450" y="42" text-anchor="middle" fill="#6b9bd1" font-family="JetBrains Mono" font-size="10" letter-spacing="1">FOUNDATION (yesterday's class)</text>
+        <text x="450" y="60" text-anchor="middle" fill="#e8e6e0" font-family="Fraunces" font-size="16">Data Model (MM, BP, 0G)</text>
+
+        <line x1="450" y1="70" x2="450" y2="98" stroke="#d97757" stroke-width="1.5" marker-end="url(#arrA)"/>
+
+        <!-- BO Type -->
+        <rect x="350" y="100" width="200" height="50" rx="6" fill="#1c2330" stroke="#c084ce" stroke-width="1.5"/>
+        <text x="450" y="120" text-anchor="middle" fill="#c084ce" font-family="JetBrains Mono" font-size="10" letter-spacing="1">CONNECTS DATA → PROCESS</text>
+        <text x="450" y="140" text-anchor="middle" fill="#e8e6e0" font-family="Fraunces" font-size="16">Business Object Type (194)</text>
+
+        <line x1="450" y1="150" x2="450" y2="178" stroke="#d97757" stroke-width="1.5" marker-end="url(#arrA)"/>
+
+        <!-- Logical Action -->
+        <rect x="80" y="180" width="220" height="50" rx="6" fill="#1c2330" stroke="#7cb1a8" stroke-width="1.5"/>
+        <text x="190" y="200" text-anchor="middle" fill="#7cb1a8" font-family="JetBrains Mono" font-size="10" letter-spacing="1">VERB · WHAT IS BEING DONE</text>
+        <text x="190" y="220" text-anchor="middle" fill="#e8e6e0" font-family="Fraunces" font-size="16">Logical Action (CREATE)</text>
+
+        <!-- Business Activity -->
+        <rect x="340" y="180" width="220" height="50" rx="6" fill="#1c2330" stroke="#e8b059" stroke-width="2"/>
+        <text x="450" y="200" text-anchor="middle" fill="#e8b059" font-family="JetBrains Mono" font-size="10" letter-spacing="1">BINDS VERB + OBJECT</text>
+        <text x="450" y="220" text-anchor="middle" fill="#e8e6e0" font-family="Fraunces" font-size="16">Business Activity (MAT1)</text>
+
+        <line x1="300" y1="205" x2="338" y2="205" stroke="#d97757" stroke-width="1.5" marker-end="url(#arrA)"/>
+
+        <line x1="450" y1="230" x2="450" y2="258" stroke="#d97757" stroke-width="1.5" marker-end="url(#arrA)"/>
+
+        <!-- CR Type -->
+        <rect x="340" y="260" width="220" height="50" rx="6" fill="#1c2330" stroke="#d97757" stroke-width="2"/>
+        <text x="450" y="280" text-anchor="middle" fill="#d97757" font-family="JetBrains Mono" font-size="10" letter-spacing="1">REUSABLE TEMPLATE</text>
+        <text x="450" y="300" text-anchor="middle" fill="#e8e6e0" font-family="Fraunces" font-size="16">Change Request Type (MAT01)</text>
+
+        <!-- Three branches: workflow, UI, steps -->
+        <line x1="450" y1="310" x2="450" y2="338" stroke="#d97757" stroke-width="1.5"/>
+        <line x1="200" y1="338" x2="700" y2="338" stroke="#d97757" stroke-width="1.5"/>
+        <line x1="200" y1="338" x2="200" y2="358" stroke="#d97757" stroke-width="1.5" marker-end="url(#arrA)"/>
+        <line x1="450" y1="338" x2="450" y2="358" stroke="#d97757" stroke-width="1.5" marker-end="url(#arrA)"/>
+        <line x1="700" y1="338" x2="700" y2="358" stroke="#d97757" stroke-width="1.5" marker-end="url(#arrA)"/>
+
+        <rect x="90" y="360" width="220" height="50" rx="6" fill="#1c2330" stroke="#6b9bd1" stroke-width="1.5"/>
+        <text x="200" y="380" text-anchor="middle" fill="#6b9bd1" font-family="JetBrains Mono" font-size="10" letter-spacing="1">USER SCREENS</text>
+        <text x="200" y="400" text-anchor="middle" fill="#e8e6e0" font-family="Fraunces" font-size="16">UI Determination</text>
+
+        <rect x="340" y="360" width="220" height="50" rx="6" fill="#1c2330" stroke="#c084ce" stroke-width="1.5"/>
+        <text x="450" y="380" text-anchor="middle" fill="#c084ce" font-family="JetBrains Mono" font-size="10" letter-spacing="1">ROUTING ENGINE</text>
+        <text x="450" y="400" text-anchor="middle" fill="#e8e6e0" font-family="Fraunces" font-size="16">Workflow Template</text>
+
+        <rect x="590" y="360" width="220" height="50" rx="6" fill="#1c2330" stroke="#e8b059" stroke-width="1.5"/>
+        <text x="700" y="380" text-anchor="middle" fill="#e8b059" font-family="JetBrains Mono" font-size="10" letter-spacing="1">CHECKPOINTS</text>
+        <text x="700" y="400" text-anchor="middle" fill="#e8e6e0" font-family="Fraunces" font-size="16">CR Steps + Step Types</text>
+
+        <line x1="450" y1="410" x2="450" y2="438" stroke="#d97757" stroke-width="1.5" marker-end="url(#arrA)"/>
+
+        <rect x="340" y="440" width="220" height="32" rx="6" fill="#1c2330" stroke="#7cb1a8" stroke-width="1.5"/>
+        <text x="450" y="461" text-anchor="middle" fill="#7cb1a8" font-family="Fraunces" font-size="15">User creates a CR &amp; data flows</text>
+      </svg>
+      <div class="diagram-caption">THE COMPLETE CONFIGURATION CHAIN · CONCEPTS COVERED IN THIS GUIDE</div>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 1 ============ -->
+  <section id="s1">
+    <div class="section-head">
+      <div class="section-num">01</div>
+      <h2>Governance Scope</h2>
+    </div>
+    <p class="section-subtitle">The "rule of the land" — what MDG governs, and the universe of operations it controls.</p>
+
+    <div class="stage-strip">
+      <div class="stage-pip active">Governance Scope</div>
+      <div class="stage-pip">CR</div>
+      <div class="stage-pip">Header</div>
+      <div class="stage-pip">Logical Action</div>
+      <div class="stage-pip">Business Activity</div>
+      <div class="stage-pip">CR Type</div>
+      <div class="stage-pip">Steps</div>
+      <div class="stage-pip">Workflow</div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What is it</div>
+          <h3>Governance Scope — the boundary of MDG's authority</h3>
+        </div>
+      </div>
+      <p><span class="term">Governance Scope</span> defines <em>what</em> MDG governs and <em>how far</em> its authority reaches. It is the answer to the question: "Which master data, and which operations on that master data, fall under MDG's control?"</p>
+      <p>In plain words, governance scope sets the boundary line: anything <em>inside</em> the scope must follow the rules of MDG (create through a CR, get approved, get activated). Anything <em>outside</em> the scope is left alone for normal SAP transactions to handle.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon why">Y</div>
+        <div>
+          <div class="sub-block-title">Why we use it</div>
+          <h3>Why scope must be defined</h3>
+        </div>
+      </div>
+      <p>Not every piece of data in an SAP system is master data. Not every piece of master data needs heavy governance. By defining a clear scope, MDG:</p>
+      <ul class="bullet">
+        <li><strong>Picks battles wisely</strong> — only the high-value master data (material, vendor, customer, finance) gets the full governance treatment.</li>
+        <li><strong>Avoids friction</strong> — low-risk transactional data is not forced through approval workflows.</li>
+        <li><strong>Targets the right operations</strong> — only the operations that <em>change</em> data (create, update, delete, block) need governance; pure reads do not.</li>
+        <li><strong>Aligns with the organization's policies</strong> — governance scope can be tuned per company: one organization may govern only vendors, another may govern everything.</li>
+      </ul>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">What governance covers</div>
+          <h3>The universe of operations under MDG control</h3>
+        </div>
+      </div>
+      <p>Governance scope typically includes the following operations on master data — these are exactly the operations that need a Change Request:</p>
+      <div class="field-table">
+        <div class="field-table-head">Operations inside governance scope</div>
+        <div class="field-row">
+          <div class="field-name">Create</div>
+          <div class="field-desc">Bring a new master data record into existence.<span class="example">Example: a new vendor "ACME Corp" is onboarded.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Change / Process</div>
+          <div class="field-desc">Modify fields on an existing record (description, address, bank details, tax data).<span class="example">Example: a vendor changes their bank account number.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Delete / Mark for Deletion</div>
+          <div class="field-desc">Flag a record so it can no longer be used in transactions.<span class="example">Example: a discontinued material is marked for deletion.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Block / Unblock</div>
+          <div class="field-desc">Temporarily prevent use of a record without deleting it.<span class="example">Example: pause purchases from a vendor under legal review.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Mass Processing</div>
+          <div class="field-desc">Apply the same operation across many records at once.<span class="example">Example: bulk update unit of measure for 200 materials.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Copy</div>
+          <div class="field-desc">Create a new record using an existing one as the starting template.<span class="example">Example: duplicate a vendor record for a new region.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Cleanse</div>
+          <div class="field-desc">Fix data quality issues (standardize formats, remove duplicates).<span class="example">Example: standardize address format across all customers.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="what-if">
+      <p>If governance scope did not exist, MDG would either be everywhere (slowing every tiny transaction) or nowhere (no rules at all). A clearly defined scope is what makes MDG <em>practical</em> — it lets the organization decide "these data domains and these operations are important enough to govern, and everything else continues normally."</p>
+    </div>
+
+    <div class="analogy">
+      <p>Think of <strong>traffic rules in a city</strong>. The traffic department doesn't govern every footpath — it focuses on roads, highways, and specific zones. Inside those zones, you need a license, a registered vehicle, and you must follow signals. Outside the zones (your own backyard), you can ride a bicycle however you want.</p>
+      <p>Governance scope is the same idea: MDG decides which "roads" of master data need rules (license = CR, signals = workflow, registration = approval), and which areas need no special treatment.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon link">L</div>
+        <div>
+          <div class="sub-block-title">How governance scope is realized</div>
+          <h3>The IMG path where scope is configured</h3>
+        </div>
+      </div>
+      <p>Governance scope is not configured as one single field. It is the <em>combined effect</em> of several settings:</p>
+      <ul class="bullet">
+        <li><strong>Data models you enable</strong> — picking MM, BP, 0G, 0F decides which master data domains are in scope.</li>
+        <li><strong>Change Request Types you define</strong> — each CR Type adds a specific operation (create material, change vendor, etc.) to the governed scope.</li>
+        <li><strong>Business activities you create</strong> — each business activity adds an allowed verb (create, change, mass) to the scope.</li>
+      </ul>
+      <div class="path">
+        <span class="terminal">SPRO</span><span class="arrow">→</span>Master Data Governance<span class="arrow">→</span>General Settings<span class="arrow">→</span><span class="terminal">Process Modeling</span>
+      </div>
+      <p>Everything that follows in this guide — Change Request, Header, Logical Action, Business Activity, CR Type, Steps, Workflow — is the machinery that <em>implements</em> governance scope.</p>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 2 — CHANGE REQUEST ============ -->
+  <section id="s2">
+    <div class="section-head">
+      <div class="section-num">02</div>
+      <h2>Change Request</h2>
+    </div>
+    <p class="section-subtitle">The starting gate — every master data change must travel inside a CR.</p>
+
+    <div class="stage-strip">
+      <div class="stage-pip">Governance Scope</div>
+      <div class="stage-pip active">CR</div>
+      <div class="stage-pip">Header</div>
+      <div class="stage-pip">Logical Action</div>
+      <div class="stage-pip">Business Activity</div>
+      <div class="stage-pip">CR Type</div>
+      <div class="stage-pip">Steps</div>
+      <div class="stage-pip">Workflow</div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What is it</div>
+          <h3>The Change Request (CR)</h3>
+        </div>
+      </div>
+      <p>A <span class="term">Change Request</span> is a formal request a user creates whenever they want to do <strong>anything</strong> to master data in MDG — create a new material, change a customer's address, delete a vendor, block a business partner. It is the only way master data can be touched in the MDG system.</p>
+      <p>Think of it as a "sealed envelope with the proposed changes inside." The system holds your changes inside this envelope, routes it for approval, and only writes them to the database after every approver has signed off.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon why">Y</div>
+        <div>
+          <div class="sub-block-title">Why we use it</div>
+          <h3>Why does MDG force every change through a CR?</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Governance &amp; control</strong> — no one can sneak a bad value into production master data. Every change is reviewed by at least one approver.</li>
+        <li><strong>Audit trail</strong> — who created what, who approved, when, and why. The CR carries this history forever, which is essential for compliance audits (SOX, GDPR).</li>
+        <li><strong>Workflow routing</strong> — the CR is the package that gets shipped from person to person until approved. Without the CR, there would be nothing to route.</li>
+        <li><strong>Validation &amp; rollback</strong> — bad data can be caught mid-flight and rejected without ever polluting the active tables.</li>
+        <li><strong>Different operations on the same data</strong> — create, update, delete, mass-update can all live as separate CR types for the same data model. The CR carries the "intent" along with the data.</li>
+      </ul>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Anatomy of a CR</div>
+          <h3>What a Change Request actually contains</h3>
+        </div>
+      </div>
+      <p>A CR is more than just a form. It is a structured object with three layers:</p>
+      <div class="field-table">
+        <div class="field-table-head">The three layers of a Change Request</div>
+        <div class="field-row">
+          <div class="field-name">1. Header</div>
+          <div class="field-desc">Metadata about the CR — CR number, CR type, requester, current step, status, workflow template. <em>(Section 03 covers this in detail.)</em></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">2. Data Payload</div>
+          <div class="field-desc">The actual master data values being proposed — material number, vendor name, customer address, etc. This is what eventually gets written to active tables if approved.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">3. History &amp; Comments</div>
+          <div class="field-desc">Every action taken on this CR — who submitted, who approved, who rejected, what comments they added. Permanent audit log.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Lifecycle states</div>
+          <h3>The states a CR moves through</h3>
+        </div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-head">CR status values you will encounter</div>
+        <div class="field-row">
+          <div class="field-name">Draft</div>
+          <div class="field-desc">The requester is still filling in details. Not yet submitted.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">In Processing</div>
+          <div class="field-desc">Submitted, currently sitting at one of the workflow steps awaiting action.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Approved</div>
+          <div class="field-desc">All approvers have signed off. Ready for final activation.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Activated</div>
+          <div class="field-desc">The data has been written to the active tables. The CR is essentially "live."</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Rejected</div>
+          <div class="field-desc">An approver said no. CR is closed without applying any changes.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Withdrawn</div>
+          <div class="field-desc">The requester pulled it back. CR is closed.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">In Revision</div>
+          <div class="field-desc">Sent back to the requester to fix something (step 91/92/93/95).</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="what-if">
+      <p>If change requests didn't exist, anyone with a transaction code (like <code>MM01</code>) could create or change master data directly. There would be no review, no approvers, no record of <em>who</em> changed <em>what</em> or <em>why</em>. Quality of master data — the lifeblood of every SAP report — would collapse within months. MDG's entire reason for existing is to put a CR between users and the master data tables.</p>
+    </div>
+
+    <div class="analogy">
+      <p>Think of <strong>buying a property</strong>. You don't just walk into the land office and write your name on the deed. You file an <strong>application</strong> (the CR), it goes to the registrar (workflow), then the legal officer (approver), then the sub-collector (final approval), and only then your name is entered in the official record (active table).</p>
+      <p>Each handoff is a workflow step. The application is the change request. The final stamp is the activation.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon link">L</div>
+        <div>
+          <div class="sub-block-title">What it links to</div>
+          <h3>The CR's neighborhood</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Up</strong>: the user / requester who created it.</li>
+        <li><strong>Sideways</strong>: the <span class="term">Change Request Type</span> that defines its rules (data model, what it can do, which workflow drives it).</li>
+        <li><strong>Through</strong>: the <span class="term">Workflow Template</span> (usually <code>WS60800086</code>) that moves it from approver to approver.</li>
+        <li><strong>Down</strong>: the master data record(s) it will eventually create or modify.</li>
+      </ul>
+      <div class="path">
+        <span class="terminal">SPRO</span><span class="arrow">→</span>MDG<span class="arrow">→</span>General Settings<span class="arrow">→</span>Process Modeling<span class="arrow">→</span><span class="terminal">Change Requests</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 3 — CR HEADER ============ -->
+  <section id="s3">
+    <div class="section-head">
+      <div class="section-num">03</div>
+      <h2>Change Request Header</h2>
+    </div>
+    <p class="section-subtitle">The metadata layer — what kind of CR is this, and what does it carry?</p>
+
+    <div class="stage-strip">
+      <div class="stage-pip">Governance Scope</div>
+      <div class="stage-pip">CR</div>
+      <div class="stage-pip active">Header</div>
+      <div class="stage-pip">Logical Action</div>
+      <div class="stage-pip">Business Activity</div>
+      <div class="stage-pip">CR Type</div>
+      <div class="stage-pip">Steps</div>
+      <div class="stage-pip">Actions</div>
+      <div class="stage-pip">Step Types</div>
+      <div class="stage-pip">UI / Editions</div>
+      <div class="stage-pip">Workflow</div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What is it</div>
+          <h3>The CR Header</h3>
+        </div>
+      </div>
+      <p>The <span class="term">Change Request Header</span> is the top-level information that describes the CR — like the cover page of a file. It tells the system <em>what kind</em> of request this is, <em>which data model</em> it touches, <em>what workflow</em> will drive it, and <em>what UI screen</em> the user should see.</p>
+      <p>You do not <em>configure</em> the header directly — you configure it indirectly by configuring the <strong>Change Request Type</strong>. The header is the runtime instance; the CR Type is its design-time blueprint.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon why">Y</div>
+        <div>
+          <div class="sub-block-title">Why it matters</div>
+          <h3>The header is the system's instruction sheet</h3>
+        </div>
+      </div>
+      <p>When MDG receives a new CR, it reads the header first to decide:</p>
+      <ul class="bullet">
+        <li>"Which data model do I touch?" (e.g. MM for material)</li>
+        <li>"Is this a create, change, delete, or mass operation?" (via business activity → logical action)</li>
+        <li>"Which workflow do I launch?" (workflow template number)</li>
+        <li>"Which screen do I show the user?" (UI application + UI configuration)</li>
+        <li>"Is this single-record only or multi-record?" (single-object flag)</li>
+      </ul>
+      <p>Without these answers the CR cannot move an inch.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Fields in the header</div>
+          <h3>What you see when configuring (these come from the CR Type)</h3>
+        </div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-head">Header fields — visible at the CR Type configuration screen</div>
+        <div class="field-row">
+          <div class="field-name">Change Request Type<span class="required">*</span></div>
+          <div class="field-desc">The unique code identifying this CR template. <strong>4-character code</strong> like <code>MAT01</code> or <code>BP01</code>.<span class="example">Example: MAT01 → "Material — Create"</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Description<span class="required">*</span></div>
+          <div class="field-desc">A human-readable label so users know what this CR does.<span class="example">Example: "Create Material"</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Data Model<span class="required">*</span></div>
+          <div class="field-desc">Which data model this CR operates on. <code>MM</code>, <code>BP</code>, <code>0G</code> (finance), etc. Links the CR to a specific master data domain.<span class="example">Example: MM — material master data model</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Single Object</div>
+          <div class="field-desc">Checkbox. If ticked, only <strong>one</strong> record can be created/changed in this CR. If un-ticked, multiple records can be handled (mass processing).<span class="example">Example: MAT01 is ticked → one material per CR</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Main Entity Type<span class="required">*</span></div>
+          <div class="field-desc">The root entity of the data model that this CR touches. Comes from the data model itself.<span class="example">Example: MATERIAL for MM, BP_HEADER for BP</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Business Activity<span class="required">*</span></div>
+          <div class="field-desc">The link to the action being performed. Tells MDG <em>what kind</em> of operation (create / change / display / mass / delete).<span class="example">Example: MAT1 (which means CREATE + Material BO type 194)</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Workflow Template<span class="required">*</span></div>
+          <div class="field-desc">Which workflow drives this CR. Most modern MDG installations use <code>WS60800086</code> (rule-based).<span class="example">Example: WS60800086 → rule-based workflow</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">UI Application Name</div>
+          <div class="field-desc">Which Web Dynpro application hosts the CR screen.<span class="example">Example: USMD_ENTITY_VALUE2</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">UI Configuration</div>
+          <div class="field-desc">Which FPM configuration arranges the screen fields, tabs, and toolbars.<span class="example">Example: USMD_OVP_MAT_CREATE</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Edition Type</div>
+          <div class="field-desc">Only used for editions-enabled CRs (mainly MDG-F). Groups CRs into release packages.<span class="example">Example: 0G_ALL — for finance master data</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="what-if">
+      <p>If the header didn't carry these fields, every CR would be a blob of unknown data — the system wouldn't know whether you want to create a customer or delete a material, which screen to show you, or whom to send it to. The header is the system's <em>only</em> way to interpret what the CR means.</p>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 4 — LOGICAL ACTION ============ -->
+  <section id="s4">
+    <div class="section-head">
+      <div class="section-num">04</div>
+      <h2>Logical Action</h2>
+    </div>
+    <p class="section-subtitle">The verb — SAP's vocabulary for "what operation is being performed."</p>
+
+    <div class="stage-strip">
+      <div class="stage-pip">Governance Scope</div>
+      <div class="stage-pip">CR</div>
+      <div class="stage-pip">Header</div>
+      <div class="stage-pip active">Logical Action</div>
+      <div class="stage-pip">Business Activity</div>
+      <div class="stage-pip">CR Type</div>
+      <div class="stage-pip">Steps</div>
+      <div class="stage-pip">Actions</div>
+      <div class="stage-pip">Step Types</div>
+      <div class="stage-pip">UI / Editions</div>
+      <div class="stage-pip">Workflow</div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What is it</div>
+          <h3>The Logical Action</h3>
+        </div>
+      </div>
+      <p>A <span class="term">Logical Action</span> is SAP's standardized name for the type of operation you want to perform on master data. It is the <strong>verb</strong> of every CR: <code>CREATE</code>, <code>CHANGE</code>, <code>DELETE</code>, <code>BLOCK</code>, <code>DISPLAY</code>, <code>MASS</code>, <code>COPY</code>, <code>CLEANSE</code>, <code>LOAD</code>.</p>
+      <p>SAP ships these — you do not invent your own. They are global to all data models. A <code>CREATE</code> means the same thing whether you are creating a material, a customer, or a cost center.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon why">Y</div>
+        <div>
+          <div class="sub-block-title">Why we use it</div>
+          <h3>It is the universal action language</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Standardization</strong> — the system handles every CREATE the same way internally, regardless of data model.</li>
+        <li><strong>Routing logic</strong> — workflows can ask "is this a CREATE or a DELETE?" and route differently based on the answer.</li>
+        <li><strong>Validation</strong> — different rules apply to creates vs deletes (e.g., creates need uniqueness checks; deletes need dependency checks).</li>
+        <li><strong>UI behavior</strong> — fields may be editable for CREATE but read-only for DISPLAY.</li>
+      </ul>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon use">U</div>
+        <div>
+          <div class="sub-block-title">How it is used</div>
+          <h3>Where it sits in the chain</h3>
+        </div>
+      </div>
+      <p>You <strong>never</strong> attach a logical action directly to a CR Type. The path is:</p>
+      <div class="path-block">
+        <span class="start">Logical Action</span><span class="arrow">→</span>attached to<span class="arrow">→</span><span class="terminal">Business Activity</span><span class="arrow">→</span>attached to<span class="arrow">→</span><span class="terminal">Change Request Type</span>
+      </div>
+      <p>So the logical action's job is to give the Business Activity its <em>meaning</em>. The Business Activity is just a label — the logical action is what tells the system "this label means CREATE."</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Standard logical actions</div>
+          <h3>The 9 verbs you'll see</h3>
+        </div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-head">SAP-shipped logical actions</div>
+        <div class="field-row">
+          <div class="field-name"><span class="pill">CREATE</span></div>
+          <div class="field-desc">Generate a brand-new master data record. The system checks the key does not already exist, then inserts.<span class="example">Used by MAT1 for material creation.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name"><span class="pill teal">CHANGE</span></div>
+          <div class="field-desc">Modify an existing record. The system fetches the current record and applies your edits.<span class="example">Used by MAT2 for material change.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name"><span class="pill amber">DISPLAY</span></div>
+          <div class="field-desc">Read-only view of a record. No save allowed.<span class="example">Used by MAT3 for material display.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name"><span class="pill mauve">DELETE</span></div>
+          <div class="field-desc">Hard delete a record (rare for master data — usually a mark-for-deletion instead).<span class="example">Used by MAT6.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name"><span class="pill">BLOCK</span></div>
+          <div class="field-desc">Logically block a record so no new transactions can use it, but the data stays in the system.<span class="example">e.g. blocking a vendor under fraud review.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name"><span class="pill teal">MASS</span></div>
+          <div class="field-desc">Apply the same operation to many records in one CR.<span class="example">Used by MATA — process multiple materials.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name"><span class="pill amber">COPY</span></div>
+          <div class="field-desc">Duplicate an existing record as a starting point for a new one.<span class="example">e.g. clone material M1 → M2 with minor changes.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name"><span class="pill mauve">CLEANSE</span></div>
+          <div class="field-desc">Data-quality cleanup — standardize, normalize, deduplicate.<span class="example">Used in MDG-C, MDG-S cleansing scenarios.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name"><span class="pill">LOAD</span></div>
+          <div class="field-desc">Bulk load master data from outside (e.g. file upload, migration).<span class="example">Used in initial load programs.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="what-if">
+      <p>Without logical actions, the system would have no idea whether your CR is supposed to create something new, modify something old, or delete something. Every CR would look identical to the engine. There would be no way to apply different validations, different UIs, or different workflows for different operations.</p>
+    </div>
+
+    <div class="analogy">
+      <p>Imagine a hospital with a single form for everything — admission, discharge, surgery, observation. Doctors and nurses wouldn't know what to do with the patient. By stamping <strong>ADMIT</strong>, <strong>DISCHARGE</strong>, <strong>OPERATE</strong> on the form, the hospital instantly routes the patient through the right process. Logical actions are those stamps.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon config">C</div>
+        <div>
+          <div class="sub-block-title">Configuration path</div>
+          <h3>Where to view them</h3>
+        </div>
+      </div>
+      <div class="path-block">
+        <span class="terminal">MDG IMG</span><span class="arrow">→</span>General Settings<span class="arrow">→</span>Process Modeling<span class="arrow">→</span>Business Activities<span class="arrow">→</span><span class="terminal">Logical Actions (display)</span>
+      </div>
+      <p style="color:var(--ink-2); font-size:14px;">You only <em>view</em> these — you don't create new ones (they are SAP-delivered).</p>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 5 — BUSINESS ACTIVITY ============ -->
+  <section id="s5">
+    <div class="section-head">
+      <div class="section-num">05</div>
+      <h2>Business Activity</h2>
+    </div>
+    <p class="section-subtitle">The bridge — where the verb meets the object.</p>
+
+    <div class="stage-strip">
+      <div class="stage-pip">Governance Scope</div>
+      <div class="stage-pip">CR</div>
+      <div class="stage-pip">Header</div>
+      <div class="stage-pip">Logical Action</div>
+      <div class="stage-pip active">Business Activity</div>
+      <div class="stage-pip">CR Type</div>
+      <div class="stage-pip">Steps</div>
+      <div class="stage-pip">Actions</div>
+      <div class="stage-pip">Step Types</div>
+      <div class="stage-pip">UI / Editions</div>
+      <div class="stage-pip">Workflow</div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What is it</div>
+          <h3>The Business Activity</h3>
+        </div>
+      </div>
+      <p>A <span class="term">Business Activity</span> is a configurable record that binds a <strong>Logical Action</strong> (the verb — e.g. CREATE) to a <strong>Business Object Type</strong> (the noun — e.g. Material/194). It is the layer where MDG learns that "this combination is allowed and meaningful."</p>
+      <p>The naming convention is consistent: <code>MAT1</code> = Material + Create, <code>MAT2</code> = Material + Change, <code>MAT3</code> = Material + Display, <code>MAT6</code> = Material + Mark-for-Deletion, <code>MATA</code> = Material + Mass.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon why">Y</div>
+        <div>
+          <div class="sub-block-title">Why we use it</div>
+          <h3>Why not just use Logical Action directly?</h3>
+        </div>
+      </div>
+      <p>Because logical actions are <em>global verbs</em>. They don't say <em>what</em> you are creating. CREATE is the same word whether you're creating a material, a vendor, a cost center, or a bank account. The Business Activity adds the <strong>object context</strong>:</p>
+      <ul class="bullet">
+        <li><code>MAT1</code> = CREATE + Material → so the CR knows to use material fields, material validations, material UI.</li>
+        <li><code>BP1A</code> = CREATE + Business Partner → so the CR uses BP fields, BP validations, BP UI.</li>
+        <li>The same logical action (CREATE) is reused across both — only the object changes.</li>
+      </ul>
+      <p>This is the layer of <strong>reuse and combination</strong>. Without it, SAP would have to ship CREATE_MATERIAL, CREATE_VENDOR, CREATE_BP, CREATE_COST_CENTER as separate hard-coded verbs. Instead, it has 9 verbs × many object types → unlimited business activities.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon link">L</div>
+        <div>
+          <div class="sub-block-title">What it links to</div>
+          <h3>Two upstream, one downstream</h3>
+        </div>
+      </div>
+      <p>Three ingredients combine here:</p>
+      <ol class="numbered">
+        <li><strong>Business Object Type</strong> — comes from the data model (e.g. 194 for material). This is yesterday's data-modeling output.</li>
+        <li><strong>Logical Action</strong> — chosen from the SAP-delivered list (CREATE / CHANGE / etc.).</li>
+        <li><strong>Description</strong> — a friendly label.</li>
+      </ol>
+      <p>And one downstream:</p>
+      <ul class="bullet">
+        <li><strong>Change Request Type</strong> — your Business Activity will eventually be attached to a CR Type, which is what users actually pick when creating a CR.</li>
+      </ul>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Fields to fill</div>
+          <h3>What you enter when creating a Business Activity</h3>
+        </div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-head">Business Activity configuration screen</div>
+        <div class="field-row">
+          <div class="field-name">Business Activity<span class="required">*</span></div>
+          <div class="field-desc">A short code (usually 4 characters) that uniquely identifies this activity. Follow the SAP naming convention: <code>{object short}{action digit}</code>.<span class="example">Example: MAT1 = Material + Create</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Description<span class="required">*</span></div>
+          <div class="field-desc">Plain-language description so configurators know what this activity does.<span class="example">Example: "Create Material"</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Business Object Type<span class="required">*</span></div>
+          <div class="field-desc">The numeric BO type from the data model. Tells the system <em>what</em> kind of master data this activity operates on.<span class="example">Example: 194 (Material), 266 (Customer), 1000 (Cost Center)</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Logical Action<span class="required">*</span></div>
+          <div class="field-desc">Pick from the SAP standard list. Tells the system <em>what kind of operation</em> this activity performs.<span class="example">Example: CREATE, CHANGE, DISPLAY, MASS</span></div>
+        </div>
+      </div>
+      <p style="margin-top: 16px;">That's it. Just four fields. The simplicity is deliberate — a Business Activity is meant to be a tiny binding record, nothing more.</p>
+    </div>
+
+    <div class="what-if">
+      <p>Without business activities, every CR Type would have to directly reference both a logical action and a BO type — and you'd repeat that combination everywhere. The Business Activity layer is the DRY principle for MDG: define the verb+object once, reuse it in 5 different CR types if needed.</p>
+    </div>
+
+    <div class="analogy">
+      <p>Think of restaurant menus. The kitchen has standard <em>cooking methods</em> (grill, fry, bake, steam) — those are logical actions. The pantry has <em>ingredients</em> (chicken, fish, paneer) — those are BO types. The <strong>menu items</strong> (Grilled Chicken, Fried Fish, Steamed Paneer) are the business activities. The waiter (CR Type) just points to the menu item; the kitchen knows exactly what to do.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon config">C</div>
+        <div>
+          <div class="sub-block-title">How to configure</div>
+          <h3>Step-by-step</h3>
+        </div>
+      </div>
+      <div class="path-block">
+        <span class="terminal">MDG IMG</span><span class="arrow">→</span>General Settings<span class="arrow">→</span>Process Modeling<span class="arrow">→</span>Business Activities<span class="arrow">→</span><span class="terminal">Create Business Activity</span>
+      </div>
+      <div class="config-steps">
+        <div class="config-step">
+          <h5>Open the configuration screen</h5>
+          <p>Navigate using the IMG path above (or transaction <code>SPRO</code> + filter to MDG).</p>
+        </div>
+        <div class="config-step">
+          <h5>Click "New Entries"</h5>
+          <p>You will see a list of existing activities (MAT1, MAT2, BP1A, etc.). Click New Entries to add yours.</p>
+        </div>
+        <div class="config-step">
+          <h5>Fill the four required fields</h5>
+          <p>Business Activity code, Description, Business Object Type, Logical Action.</p>
+        </div>
+        <div class="config-step">
+          <h5>Save</h5>
+          <p>The activity is now available to be attached to a CR Type. Save through transport if you're in a Dev/QA system.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 6 — CR TYPE ============ -->
+  <section id="s6">
+    <div class="section-head">
+      <div class="section-num">06</div>
+      <h2>Change Request Type</h2>
+    </div>
+    <p class="section-subtitle">The master template — this is what users actually pick when starting a CR.</p>
+
+    <div class="stage-strip">
+      <div class="stage-pip">Governance Scope</div>
+      <div class="stage-pip">CR</div>
+      <div class="stage-pip">Header</div>
+      <div class="stage-pip">Logical Action</div>
+      <div class="stage-pip">Business Activity</div>
+      <div class="stage-pip active">CR Type</div>
+      <div class="stage-pip">Steps</div>
+      <div class="stage-pip">Actions</div>
+      <div class="stage-pip">Step Types</div>
+      <div class="stage-pip">UI / Editions</div>
+      <div class="stage-pip">Workflow</div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What is it</div>
+          <h3>The Change Request Type</h3>
+        </div>
+      </div>
+      <p>A <span class="term">Change Request Type</span> is the reusable, configured blueprint that defines an entire kind of change request: what data model, what business activity (and therefore what operation), what workflow, what UI screen, and what edition (if any).</p>
+      <p>This is the <strong>most important configuration object</strong> for end users. When a user logs into MDG and clicks "Create Change Request," the first thing they see is a list of CR Types — and the one they pick determines everything that happens next.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon why">Y</div>
+        <div>
+          <div class="sub-block-title">Why we use it</div>
+          <h3>One template, many users</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Reusability</strong> — you configure MAT01 once; 500 users can use it forever to create materials.</li>
+        <li><strong>Standardization</strong> — every "Create Material" CR follows the same workflow, same approvers, same screen.</li>
+        <li><strong>Separation of duties</strong> — Create CR Type (MAT01) goes through one workflow; Delete CR Type (MAT06) goes through a stricter workflow with more approvers.</li>
+        <li><strong>Different UIs for different operations</strong> — MAT01's UI shows blank fields for entry; MAT03's UI shows read-only fields for display.</li>
+      </ul>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Fields to fill</div>
+          <h3>Everything you configure on the CR Type screen</h3>
+        </div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-head">Create Change Request Type — Fields</div>
+        <div class="field-row">
+          <div class="field-name">Type of Change Request<span class="required">*</span></div>
+          <div class="field-desc">The unique 4-character code. <strong>This is what users pick</strong> when creating a CR.<span class="example">Example: MAT01</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Description<span class="required">*</span></div>
+          <div class="field-desc">User-facing label shown in the CR Type dropdown.<span class="example">Example: "Create Material"</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Data Model<span class="required">*</span></div>
+          <div class="field-desc">Which data model this CR Type operates on.<span class="example">Example: MM (material), BP (business partner), 0G (finance)</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Single Object</div>
+          <div class="field-desc">Tick if only one master data record can be processed in this CR. Leave unticked for mass-processing CR Types.<span class="example">Tick this for MAT01 (create one material); leave unticked for MATA0 (mass change).</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Main Entity Type<span class="required">*</span></div>
+          <div class="field-desc">The root entity of the data model that this CR Type touches.<span class="example">Example: MATERIAL for MM data model</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Business Activity<span class="required">*</span></div>
+          <div class="field-desc"><strong>The most important field</strong>. Links this CR Type to a business activity (which in turn carries the logical action + BO type).<span class="example">Example: MAT1 (for create), MAT2 (for change), MAT3 (for display)</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Workflow Template<span class="required">*</span></div>
+          <div class="field-desc">The workflow that drives this CR Type.<span class="example">Modern standard: WS60800086 (rule-based workflow)</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">UI Application Name</div>
+          <div class="field-desc">The Web Dynpro application for the CR screen.<span class="example">Example: USMD_ENTITY_VALUE2 or a custom Z-app</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">UI Configuration</div>
+          <div class="field-desc">The FPM configuration that controls field layout, tab order, and toolbars.<span class="example">Example: USMD_OVP_MAT_CREATE</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Edition Type</div>
+          <div class="field-desc">Only required if this CR Type uses editions (mainly MDG-F). Leave blank if not.<span class="example">Example: 0G_ALL for finance data</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="what-if">
+      <p>Without CR Types, users would face a blank form and have to manually specify "I want to create a material using MM data model with workflow WS60800086…" every single time. CR Types are the dropdown menu of "things this user is allowed to do" — and the system already knows the configuration behind each option.</p>
+    </div>
+
+    <div class="analogy">
+      <p>Think of online tax filing. You don't fill a blank piece of paper. You pick a <strong>form type</strong> first: "ITR-1 for salary income," "ITR-2 for capital gains," "ITR-3 for business income." Each form type pre-configures which fields are shown, which validations apply, where the form is routed. CR Types are MDG's version of "ITR-1, ITR-2, ITR-3."</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon config">C</div>
+        <div>
+          <div class="sub-block-title">How to configure</div>
+          <h3>Step-by-step</h3>
+        </div>
+      </div>
+      <div class="path-block">
+        <span class="terminal">MDG IMG</span><span class="arrow">→</span>General Settings<span class="arrow">→</span>Process Modeling<span class="arrow">→</span>Change Requests<span class="arrow">→</span><span class="terminal">Create Change Request Type</span>
+      </div>
+      <div class="config-steps">
+        <div class="config-step">
+          <h5>Pre-requisite — Business Activity must exist</h5>
+          <p>Before creating the CR Type, ensure the Business Activity you want to link is already configured (Section 04).</p>
+        </div>
+        <div class="config-step">
+          <h5>Pre-requisite — Data model must exist</h5>
+          <p>From yesterday's data modeling class — the data model (e.g. MM) must be defined and active.</p>
+        </div>
+        <div class="config-step">
+          <h5>Open the CR Type screen</h5>
+          <p>Navigate using the IMG path above.</p>
+        </div>
+        <div class="config-step">
+          <h5>Click "New Entries"</h5>
+          <p>Add your CR Type with a unique 4-character code.</p>
+        </div>
+        <div class="config-step">
+          <h5>Fill all the fields shown above</h5>
+          <p>Most importantly: Data Model, Business Activity, Workflow Template.</p>
+        </div>
+        <div class="config-step">
+          <h5>Configure steps for this CR Type (next section)</h5>
+          <p>Go to "Define Change Request Steps for Workflow" and add the steps your workflow should follow.</p>
+        </div>
+        <div class="config-step">
+          <h5>Save &amp; transport</h5>
+          <p>Your CR Type is now visible to end users.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>Standard CR Types you should know</h3>
+    <table>
+      <thead>
+        <tr><th>CR Type</th><th>Data Model</th><th>Business Activity</th><th>Logical Action</th><th>Purpose</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>MAT01</code></td><td>MM</td><td>MAT1</td><td>CREATE</td><td>Create new material</td></tr>
+        <tr><td><code>MAT02</code></td><td>MM</td><td>MAT2</td><td>CHANGE</td><td>Change existing material</td></tr>
+        <tr><td><code>MAT03</code></td><td>MM</td><td>MAT3</td><td>DISPLAY</td><td>Display material (read-only CR)</td></tr>
+        <tr><td><code>MAT06</code></td><td>MM</td><td>MAT6</td><td>DELETE</td><td>Mark material for deletion</td></tr>
+        <tr><td><code>MATA0</code></td><td>MM</td><td>MATA</td><td>MASS</td><td>Mass change of materials</td></tr>
+        <tr><td><code>BP01</code></td><td>BP</td><td>BP1A</td><td>CREATE</td><td>Create business partner</td></tr>
+        <tr><td><code>CUST1P</code></td><td>BP</td><td>—</td><td>CREATE</td><td>Create customer (uses BP data model)</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ============ SECTION 7 — CR STEPS ============ -->
+  <section id="s7">
+    <div class="section-head">
+      <div class="section-num">07</div>
+      <h2>Change Request Steps</h2>
+    </div>
+    <p class="section-subtitle">The checkpoints — every stop the CR must make on its journey.</p>
+
+    <div class="stage-strip">
+      <div class="stage-pip">Governance Scope</div>
+      <div class="stage-pip">CR</div>
+      <div class="stage-pip">Header</div>
+      <div class="stage-pip">Logical Action</div>
+      <div class="stage-pip">Business Activity</div>
+      <div class="stage-pip">CR Type</div>
+      <div class="stage-pip active">Steps</div>
+      <div class="stage-pip">Actions</div>
+      <div class="stage-pip">Step Types</div>
+      <div class="stage-pip">UI / Editions</div>
+      <div class="stage-pip">Workflow</div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What is it</div>
+          <h3>The Change Request Step</h3>
+        </div>
+      </div>
+      <p>A <span class="term">Change Request Step</span> is a numbered checkpoint that the CR must pass through during its lifecycle. Each step is a state — "currently being processed by requester," "waiting for approver 1," "under final check," "completed," "in revision," etc.</p>
+      <p>Every CR has a current step at any moment in time. The workflow's job is to <em>move</em> the CR from one step to the next based on what users do (approve, reject, withdraw).</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon why">Y</div>
+        <div>
+          <div class="sub-block-title">Why we use it</div>
+          <h3>Without steps, no workflow</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Tracking</strong> — at any moment, the system (and users) know where the CR is in its journey.</li>
+        <li><strong>Permissions</strong> — the current step determines who can see, edit, approve, or reject the CR.</li>
+        <li><strong>UI behavior</strong> — different screens / buttons appear depending on the current step.</li>
+        <li><strong>Routing</strong> — the next step is decided by the workflow's decision tables based on the current step.</li>
+      </ul>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Standard step numbers</div>
+          <h3>SAP's step numbering convention</h3>
+        </div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-head">Standard CR steps</div>
+        <div class="field-row">
+          <div class="field-name"><code>00</code> — Initial / Processing</div>
+          <div class="field-desc">The starting step. The CR is being drafted by the requester. It has not yet been submitted for approval.<span class="example">Status: "Processing" — only the requester can edit.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name"><code>10, 20, 30…</code> — Custom approval steps</div>
+          <div class="field-desc"><strong>Your custom steps</strong>. Insert these between 00 and 90. Each one represents an approver, validator, or reviewer.<span class="example">Example: 10 = Approver 1, 20 = Approver 2, 30 = Data Quality Manager.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name"><code>90</code> — Final check / Activation</div>
+          <div class="field-desc">The system performs the final validation and writes the data to the active tables.<span class="example">After step 90, the master data is officially "live" in MDG.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name"><code>91, 92, 93, 95</code> — Revision states</div>
+          <div class="field-desc">Used when a CR is rejected and rerouted back to the requester. Different numbers represent different "rejected by whom" states.<span class="example">Example: 91 = rejected by approver 1, 95 = rejected at final check.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name"><code>99</code> — Completion</div>
+          <div class="field-desc">The CR is fully closed. No further action possible. Either successfully activated or finally rejected.<span class="example">Status: "Completed" or "Closed."</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Fields when defining a step</div>
+          <h3>What you fill in for each step</h3>
+        </div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-head">Define Change Request Steps for Workflow — Fields</div>
+        <div class="field-row">
+          <div class="field-name">Change Request Type<span class="required">*</span></div>
+          <div class="field-desc">Which CR Type does this step belong to.<span class="example">Example: MAT01</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Step Number<span class="required">*</span></div>
+          <div class="field-desc">The numeric position of this step. Lower numbers run first.<span class="example">Example: 00, 10, 20, 90, 99</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Description<span class="required">*</span></div>
+          <div class="field-desc">Friendly name shown in the workflow inbox.<span class="example">Example: "Approver Review," "Final Validation"</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Step Type<span class="required">*</span></div>
+          <div class="field-desc">A code (1–9, A, B) that controls which buttons (actions) appear at this step. See Section 08.<span class="example">Example: Step Type 2 → Approve / Reject buttons appear</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="what-if">
+      <p>Without steps, the CR would be a one-shot — submitted and immediately activated, with no approval, no review, no chance to catch errors. The whole concept of governance depends on having checkpoints, and the steps are those checkpoints.</p>
+    </div>
+
+    <div class="analogy">
+      <p>Think of luggage on an international flight. Step 00 = check-in counter. Step 10 = security. Step 20 = customs. Step 90 = loaded onto the plane (final check). Step 99 = arrived at destination. Step 91 = sent back because it had a banned item. Each step has a clear owner, a clear set of actions, and a clear next-stop. The CR's steps work exactly the same.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon config">C</div>
+        <div>
+          <div class="sub-block-title">How to configure</div>
+          <h3>Step-by-step</h3>
+        </div>
+      </div>
+      <div class="path-block">
+        <span class="terminal">MDG IMG</span><span class="arrow">→</span>Process Modeling<span class="arrow">→</span>Workflow<span class="arrow">→</span>Rule-Based Workflow<span class="arrow">→</span><span class="terminal">Define Change Request Steps for Workflow</span>
+      </div>
+      <div class="config-steps">
+        <div class="config-step">
+          <h5>Pick the CR Type</h5>
+          <p>Filter or select the CR Type you want to define steps for (e.g. MAT01).</p>
+        </div>
+        <div class="config-step">
+          <h5>Review existing standard steps</h5>
+          <p>SAP delivers 00, 90, 91-95, 99. These are usually pre-configured — don't delete them.</p>
+        </div>
+        <div class="config-step">
+          <h5>Click "New Entries" to add custom steps</h5>
+          <p>Insert step 10, 20, etc. between 00 and 90 for your custom approval points.</p>
+        </div>
+        <div class="config-step">
+          <h5>Assign a Step Type</h5>
+          <p>For each new step, pick the step type that controls which buttons users see (see Section 08).</p>
+        </div>
+        <div class="config-step">
+          <h5>Wire the steps into the decision table</h5>
+          <p>In the rule-based workflow decision table (T-code <code>USMD_SSW_RULE</code>), define which user/role gets the CR at each step and what happens after they click an action.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 8 — CR ACTIONS ============ -->
+  <section id="s8">
+    <div class="section-head">
+      <div class="section-num">08</div>
+      <h2>Change Request Actions</h2>
+    </div>
+    <p class="section-subtitle">The buttons — what the user can do at each step.</p>
+
+    <div class="stage-strip">
+      <div class="stage-pip">Governance Scope</div>
+      <div class="stage-pip">CR</div>
+      <div class="stage-pip">Header</div>
+      <div class="stage-pip">Logical Action</div>
+      <div class="stage-pip">Business Activity</div>
+      <div class="stage-pip">CR Type</div>
+      <div class="stage-pip">Steps</div>
+      <div class="stage-pip active">Actions</div>
+      <div class="stage-pip">Step Types</div>
+      <div class="stage-pip">UI / Editions</div>
+      <div class="stage-pip">Workflow</div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What is it</div>
+          <h3>The Change Request Action</h3>
+        </div>
+      </div>
+      <p>A <span class="term">Change Request Action</span> is a button that appears on the CR screen when a user has the CR in their inbox. Clicking it tells the workflow what the user has decided — approve, reject, agree, disagree, withdraw, resubmit, finalize, etc.</p>
+      <p>Each action triggers a transition: the CR moves from the current step to the next step based on which button was clicked.</p>
+      <p><strong>Important distinction from Logical Action:</strong> a Logical Action is what is being done to <em>master data</em> (CREATE, CHANGE). A Change Request Action is what the user is doing to <em>the CR itself</em> (APPROVE, REJECT). Don't confuse the two.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon why">Y</div>
+        <div>
+          <div class="sub-block-title">Why we use them</div>
+          <h3>Actions = user decisions made tangible</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Capturing intent</strong> — each click is a decision: "I approve" vs "I reject."</li>
+        <li><strong>Triggering routing</strong> — the workflow reads the action and decides the next step.</li>
+        <li><strong>Audit trail</strong> — every action is logged: who, when, what they decided.</li>
+        <li><strong>Customizability</strong> — beyond the standard set, you can add your own actions for special cases.</li>
+      </ul>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Standard SAP actions</div>
+          <h3>The toolbox of built-in actions</h3>
+        </div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-head">Pre-delivered Change Request Actions</div>
+        <div class="field-row">
+          <div class="field-name"><span class="pill teal">AGREE</span></div>
+          <div class="field-desc">A soft positive vote — "I agree with this change."<span class="example">Used in consultation steps where opinion is gathered (not formal approval).</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name"><span class="pill">DISAGREE</span></div>
+          <div class="field-desc">A soft negative vote — "I don't agree, but it doesn't block."<span class="example">Paired with AGREE in step type 1.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name"><span class="pill teal">APPROVE</span></div>
+          <div class="field-desc">A hard positive decision — "Yes, proceed to the next step."<span class="example">Used in real approval gates.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name"><span class="pill">REJECT</span></div>
+          <div class="field-desc">A hard negative decision — "No, send this back to the requester."<span class="example">Triggers movement to a revision step (91/92/93).</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name"><span class="pill amber">FINALIZE PROCESSING</span></div>
+          <div class="field-desc">The requester signals "I'm done editing; submit for approval."<span class="example">Used at step 00 to push the CR forward.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name"><span class="pill mauve">RESUBMIT</span></div>
+          <div class="field-desc">After a rejection, the requester edits the CR and resubmits it for approval.<span class="example">Moves the CR from revision step back to step 10.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name"><span class="pill">WITHDRAW</span></div>
+          <div class="field-desc">The requester cancels the CR before it is approved.<span class="example">Moves the CR to status 99 (completed) without activation.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Fields when creating a custom action</div>
+          <h3>What you fill if you add your own action</h3>
+        </div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-head">Define Change Request Actions — Fields</div>
+        <div class="field-row">
+          <div class="field-name">Action Code<span class="required">*</span></div>
+          <div class="field-desc">A 2-character code unique within the action list.<span class="example">Example: 01 (agree), 02 (disagree), Z1 (custom validate)</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Description<span class="required">*</span></div>
+          <div class="field-desc">The label shown on the button.<span class="example">Example: "Validate Data Quality"</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Action Indicator</div>
+          <div class="field-desc">Flags telling the system whether this action is approve-like, reject-like, or neutral.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="what-if">
+      <p>Without CR actions, the user would have no way to express a decision. The CR would sit in the inbox forever. Actions are how the system collects the human verdict and propagates it through the workflow.</p>
+    </div>
+
+    <div class="analogy">
+      <p>On a banking loan application portal, you (as the loan officer) see buttons: "Approve," "Reject," "Send Back for Documents." Each click triggers the next stage. CR actions are exactly these buttons — and you can even add custom ones like "Send to Risk Manager" if your bank's process needs it.</p>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 9 — STEP TYPES ============ -->
+  <section id="s9">
+    <div class="section-head">
+      <div class="section-num">09</div>
+      <h2>Step Types &amp; Step-Action Assignment</h2>
+    </div>
+    <p class="section-subtitle">The connector — telling each step which buttons to show.</p>
+
+    <div class="stage-strip">
+      <div class="stage-pip">Governance Scope</div>
+      <div class="stage-pip">CR</div>
+      <div class="stage-pip">Header</div>
+      <div class="stage-pip">Logical Action</div>
+      <div class="stage-pip">Business Activity</div>
+      <div class="stage-pip">CR Type</div>
+      <div class="stage-pip">Steps</div>
+      <div class="stage-pip">Actions</div>
+      <div class="stage-pip active">Step Types</div>
+      <div class="stage-pip">UI / Editions</div>
+      <div class="stage-pip">Workflow</div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What is it</div>
+          <h3>The Step Type</h3>
+        </div>
+      </div>
+      <p>A <span class="term">Step Type</span> is a numeric/alphanumeric category (1, 2, 3, … 9, A, B) that defines a <em>group of allowed actions</em> for a step, plus the <em>order</em> in which those action buttons appear on the UI.</p>
+      <p>When you create a CR step (Section 06), you assign it a step type. The step type tells the system: "for this step, the user can perform actions X, Y, and Z — and the buttons should appear in this order."</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon why">Y</div>
+        <div>
+          <div class="sub-block-title">Why we use them</div>
+          <h3>The middleman between steps and actions</h3>
+        </div>
+      </div>
+      <p>Steps and actions are independent concepts. You could have 5 steps and 7 actions. <strong>How do you know which actions apply to which step?</strong> Through the step type.</p>
+      <ul class="bullet">
+        <li>Step Type 1 → Agree + Disagree</li>
+        <li>Step Type 2 → Approve + Reject</li>
+        <li>Step Type 3 → Approve + Reject + Forward</li>
+        <li>… and so on</li>
+      </ul>
+      <p>By assigning Step Type 2 to your step 10, you instantly say "this step shows Approve and Reject buttons."</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Fields for step type assignment</div>
+          <h3>"Define Change Request Step Types and Assign Actions"</h3>
+        </div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-head">Step Type → Action mapping</div>
+        <div class="field-row">
+          <div class="field-name">Step Type<span class="required">*</span></div>
+          <div class="field-desc">The code (1, 2, 3 … A, B) being defined.<span class="example">Example: 2</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Description<span class="required">*</span></div>
+          <div class="field-desc">Friendly name for this step type.<span class="example">Example: "Approval Step"</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Sequence<span class="required">*</span></div>
+          <div class="field-desc">The position number that controls the left-to-right order of buttons on the UI. Lower = leftmost button.<span class="example">Example: Sequence 1 for Approve, Sequence 2 for Reject → "Approve" appears on the left.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Action<span class="required">*</span></div>
+          <div class="field-desc">The action assigned to this sequence within this step type.<span class="example">Example: 03 = Approve, 04 = Reject</span></div>
+        </div>
+      </div>
+    </div>
+
+    <h3>Worked example</h3>
+    <div class="sub-block">
+      <p>Say you want to create a step "Manager Approval" where the manager should see <strong>Approve</strong> and <strong>Reject</strong> buttons, with Approve on the left.</p>
+      <ol class="numbered">
+        <li>Create or reuse Step Type <code>2</code>.</li>
+        <li>Under Step Type 2, define: Sequence 1 = Action APPROVE, Sequence 2 = Action REJECT.</li>
+        <li>When defining your CR step (e.g. step 10), assign Step Type = 2.</li>
+        <li>The manager opens the CR at step 10 → sees [Approve] [Reject] buttons.</li>
+      </ol>
+    </div>
+
+    <div class="what-if">
+      <p>Without step types, you'd have to individually wire each step to each action — fast turning into a maintenance nightmare. Step types are <em>reusable button presets</em> that you attach to many steps. Define once, apply many times.</p>
+    </div>
+
+    <div class="analogy">
+      <p>Think of pre-set keyboard shortcuts in apps. "Productivity preset" gives you Cut/Copy/Paste. "Editing preset" gives you Bold/Italic/Underline. Each preset is a step type — a named bundle of actions in a specific order. You apply a preset to a context, and you get those buttons.</p>
+    </div>
+
+    <h3>Service Names for Rule-Based Workflow</h3>
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon use">U</div>
+        <div>
+          <div class="sub-block-title">Custom logic hook</div>
+          <h3>Service Names</h3>
+        </div>
+      </div>
+      <p>If the standard actions (Approve, Reject, Withdraw, etc.) don't cover your business case, you can define a <span class="term">Service Name</span>. A service name is a placeholder under which you attach <strong>custom ABAP logic</strong> (a BAdI implementation, a class method, a function module) that runs when the action is triggered.</p>
+      <p>Examples of custom service uses:</p>
+      <ul class="bullet">
+        <li>Send an external email to a third-party system when the CR reaches step 50.</li>
+        <li>Call an external duplicate-check service before allowing approval.</li>
+        <li>Trigger a downstream integration (e.g. post the data to S/4HANA via OData).</li>
+      </ul>
+      <div class="path-block">
+        <span class="terminal">MDG IMG</span><span class="arrow">→</span>Process Modeling<span class="arrow">→</span>Workflow<span class="arrow">→</span>Rule-Based Workflow<span class="arrow">→</span><span class="terminal">Define Service Names for Rule-Based Workflow</span>
+      </div>
+      <p style="color:var(--ink-2); font-size: 14px;">By default the screen is empty — you create your own service names here and reference them in the workflow's decision tables.</p>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 10 — UI Determination & Editions ============ -->
+  <section id="s10">
+    <div class="section-head">
+      <div class="section-num">10</div>
+      <h2>UI Determination &amp; Editions</h2>
+    </div>
+    <p class="section-subtitle">The screen layer — which UI shows up, when, and for whom.</p>
+
+    <h3>UI Determination</h3>
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What is it</div>
+          <h3>UI Determination</h3>
+        </div>
+      </div>
+      <p><span class="term">UI Determination</span> is the configuration that decides <em>which screen</em> (Web Dynpro application + FPM configuration) to render for a given combination of CR Type, step, and user role.</p>
+      <p>The same CR Type can show different screens at different steps. For example, at step 00 (drafting) the requester sees an editable screen with empty fields; at step 10 (manager approval) the manager sees the same data but as read-only with approve/reject buttons; at step 90 (final check) the data steward might see a different layout with validation messages.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon why">Y</div>
+        <div>
+          <div class="sub-block-title">Why it matters</div>
+          <h3>Different roles need different views</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Role-appropriate UI</strong> — a finance approver shouldn't see technical fields meant for the master data team.</li>
+        <li><strong>Step-appropriate UI</strong> — draft screens have entry fields; approval screens have decision buttons.</li>
+        <li><strong>Reuse across CR types</strong> — the same UI configuration can be assigned to multiple CR types.</li>
+      </ul>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Fields</div>
+          <h3>UI Determination configuration</h3>
+        </div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-head">Configure UI Modeling → Define UI Determination</div>
+        <div class="field-row">
+          <div class="field-name">CR Type</div>
+          <div class="field-desc">The CR Type this UI rule applies to.<span class="example">Example: MAT01</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Step Number</div>
+          <div class="field-desc">If left blank, applies to all steps; otherwise specific to a step.<span class="example">Example: 10</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">User Role</div>
+          <div class="field-desc">PFCG role; if blank, applies to all roles.<span class="example">Example: SAP_MDG_MAT_APPROVER</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">UI Application Name</div>
+          <div class="field-desc">The Web Dynpro application to launch.<span class="example">Example: USMD_ENTITY_VALUE2</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">UI Configuration</div>
+          <div class="field-desc">The FPM configuration ID for screen layout.<span class="example">Example: USMD_OVP_MAT_APPROVE</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="what-if">
+      <p>Without UI determination, every user at every step would see the same generic screen — no role-based hiding of fields, no step-specific layouts, no approve/reject buttons at the right moment. The user experience would be confusing and error-prone.</p>
+    </div>
+
+    <h3>Editions</h3>
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What is it</div>
+          <h3>The Edition</h3>
+        </div>
+      </div>
+      <p>An <span class="term">Edition</span> is a version-controlled bundle of master data changes that are <strong>activated together at a planned date</strong>. Editions are mostly used in <strong>MDG-F (Finance)</strong> where reference data (cost centers, accounts, profit centers) is released in coordinated bundles.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon why">Y</div>
+        <div>
+          <div class="sub-block-title">Why use editions</div>
+          <h3>Coordinated releases of reference data</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Synchronized go-live</strong> — multiple related CRs activate together (e.g. all 50 new cost centers for FY2026).</li>
+        <li><strong>Planning view</strong> — you can see the future state of master data before it goes live.</li>
+        <li><strong>Roll-back</strong> — if the entire release is bad, you can roll back the whole edition.</li>
+        <li><strong>Time-dependent master data</strong> — some financial data has validity periods that align to edition activation dates.</li>
+      </ul>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Fields</div>
+          <h3>Edition Type configuration</h3>
+        </div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-head">Configure Editions → Edition Type</div>
+        <div class="field-row">
+          <div class="field-name">Edition Type<span class="required">*</span></div>
+          <div class="field-desc">Code for the edition group.<span class="example">Example: 0G_ALL — all finance master data editions</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Data Model<span class="required">*</span></div>
+          <div class="field-desc">The data model this edition type applies to.<span class="example">Example: 0G (finance)</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Description</div>
+          <div class="field-desc">Plain language label.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Type Indicator</div>
+          <div class="field-desc">Hard vs soft edition; whether activation date is enforceable.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <p>Think of software releases. Individual features (CRs) are merged into a release branch (edition). The release branch is tested and then deployed as a unit on a specific date. If the release has a bug, you roll back the whole release. Editions are MDG's release branches for reference data.</p>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 11 — WORKFLOW ============ -->
+  <section id="s11">
+    <div class="section-head">
+      <div class="section-num">11</div>
+      <h2>Workflow — Sequential &amp; Parallel</h2>
+    </div>
+    <p class="section-subtitle">The engine — what moves the CR from one step to the next.</p>
+
+    <div class="stage-strip">
+      <div class="stage-pip">Governance Scope</div>
+      <div class="stage-pip">CR</div>
+      <div class="stage-pip">Header</div>
+      <div class="stage-pip">Logical Action</div>
+      <div class="stage-pip">Business Activity</div>
+      <div class="stage-pip">CR Type</div>
+      <div class="stage-pip">Steps</div>
+      <div class="stage-pip">Actions</div>
+      <div class="stage-pip">Step Types</div>
+      <div class="stage-pip">UI / Editions</div>
+      <div class="stage-pip active">Workflow</div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What is it</div>
+          <h3>The Workflow</h3>
+        </div>
+      </div>
+      <p>A <span class="term">Workflow</span> in MDG is the runtime engine that picks up a submitted CR and physically moves it from one step to the next, routing it to the right users, waiting for their decisions, and either advancing the CR or sending it back.</p>
+      <p>The most-used workflow template in modern MDG is <code>WS60800086</code> — the <strong>Rule-Based Workflow</strong>. "Rule-based" means routing is controlled by configurable decision tables (rows of IF-THEN logic) rather than hard-coded flow diagrams.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon why">Y</div>
+        <div>
+          <div class="sub-block-title">Why rule-based</div>
+          <h3>Decision tables &gt; hard-coded flows</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Configurable, not coded</strong> — business users can edit the workflow without ABAP changes.</li>
+        <li><strong>Condition-driven</strong> — "if amount &gt; ₹10,00,000, route to CFO" — pure config in a table.</li>
+        <li><strong>Reusable</strong> — one template (WS60800086) drives almost every MDG CR Type with different rules.</li>
+        <li><strong>Adoption</strong> — most SAP implementations standardize on it; well-documented.</li>
+      </ul>
+    </div>
+
+    <h3>Two flavors of routing</h3>
+    <div class="sub-block">
+      <h4>Sequential workflow</h4>
+      <p>Steps execute one after the other. The CR moves to step 2 only after step 1 is approved. Levels can go from 1 to N.</p>
+      <table>
+        <thead><tr><th>Levels</th><th>Flow</th><th>Real-world example</th></tr></thead>
+        <tbody>
+          <tr><td>1-level</td><td>Requester → Data Steward → Activate</td><td>Simple admin approval (small org)</td></tr>
+          <tr><td>2-level</td><td>Requester → Approver 1 → Approver 2 → Activate</td><td>Manager + Finance Review</td></tr>
+          <tr><td>3-level</td><td>+ extra approver in between</td><td>Material requiring R&amp;D + Quality + Finance approvals</td></tr>
+          <tr><td>N-level</td><td>Chain as long as needed</td><td>Pharma master data with regulatory sign-offs</td></tr>
+        </tbody>
+      </table>
+
+      <h4>Parallel workflow</h4>
+      <p>One step routes to <strong>multiple users at the same time</strong>. The CR fans out, then converges based on decision rules.</p>
+      <ul class="bullet">
+        <li><strong>All must approve</strong> — every parallel approver must say yes.</li>
+        <li><strong>Any rejection re-routes</strong> — one "no" sends the CR back to the requester.</li>
+        <li><strong>Majority approves</strong> — threshold logic, e.g. 3 out of 4 approvers must say yes.</li>
+      </ul>
+      <p>Parallel workflow needs conditions configured in the rule-based workflow decision tables. You cannot just "tick a parallel box" — you define the logic.</p>
+    </div>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 800 360" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrW" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#a8a89c"/>
+          </marker>
+        </defs>
+
+        <text x="30" y="35" fill="#d97757" font-family="JetBrains Mono" font-size="11" letter-spacing="2">SEQUENTIAL · 2-LEVEL</text>
+        <g font-family="Inter Tight" font-size="12" fill="#e8e6e0">
+          <rect x="30" y="55" width="100" height="46" rx="4" fill="#1c2330" stroke="#d97757"/>
+          <text x="80" y="83" text-anchor="middle">Requester</text>
+          <line x1="130" y1="78" x2="158" y2="78" stroke="#a8a89c" marker-end="url(#arrW)"/>
+          <rect x="160" y="55" width="100" height="46" rx="4" fill="#1c2330" stroke="#e8b059"/>
+          <text x="210" y="83" text-anchor="middle">Approver 1</text>
+          <line x1="260" y1="78" x2="288" y2="78" stroke="#a8a89c" marker-end="url(#arrW)"/>
+          <rect x="290" y="55" width="100" height="46" rx="4" fill="#1c2330" stroke="#e8b059"/>
+          <text x="340" y="83" text-anchor="middle">Approver 2</text>
+          <line x1="390" y1="78" x2="418" y2="78" stroke="#a8a89c" marker-end="url(#arrW)"/>
+          <rect x="420" y="55" width="120" height="46" rx="4" fill="#1c2330" stroke="#7cb1a8"/>
+          <text x="480" y="83" text-anchor="middle" fill="#7cb1a8">Activate</text>
+        </g>
+
+        <line x1="30" y1="140" x2="770" y2="140" stroke="rgba(232,230,224,0.1)" stroke-dasharray="4 4"/>
+        <text x="30" y="175" fill="#7cb1a8" font-family="JetBrains Mono" font-size="11" letter-spacing="2">PARALLEL · FAN-OUT &amp; CONVERGE</text>
+
+        <g font-family="Inter Tight" font-size="12" fill="#e8e6e0">
+          <rect x="30" y="240" width="100" height="46" rx="4" fill="#1c2330" stroke="#d97757"/>
+          <text x="80" y="268" text-anchor="middle">Requester</text>
+          <line x1="130" y1="263" x2="195" y2="208" stroke="#a8a89c" marker-end="url(#arrW)"/>
+          <line x1="130" y1="263" x2="195" y2="245" stroke="#a8a89c" marker-end="url(#arrW)"/>
+          <line x1="130" y1="263" x2="195" y2="282" stroke="#a8a89c" marker-end="url(#arrW)"/>
+          <line x1="130" y1="263" x2="195" y2="320" stroke="#a8a89c" marker-end="url(#arrW)"/>
+          <rect x="200" y="195" width="100" height="30" rx="4" fill="#1c2330" stroke="#e8b059"/>
+          <text x="250" y="215" text-anchor="middle">Approver A</text>
+          <rect x="200" y="230" width="100" height="30" rx="4" fill="#1c2330" stroke="#e8b059"/>
+          <text x="250" y="250" text-anchor="middle">Approver B</text>
+          <rect x="200" y="265" width="100" height="30" rx="4" fill="#1c2330" stroke="#e8b059"/>
+          <text x="250" y="285" text-anchor="middle">Approver C</text>
+          <rect x="200" y="300" width="100" height="30" rx="4" fill="#1c2330" stroke="#e8b059"/>
+          <text x="250" y="320" text-anchor="middle">Approver D</text>
+          <line x1="300" y1="210" x2="378" y2="260" stroke="#a8a89c" marker-end="url(#arrW)"/>
+          <line x1="300" y1="245" x2="378" y2="263" stroke="#a8a89c" marker-end="url(#arrW)"/>
+          <line x1="300" y1="280" x2="378" y2="268" stroke="#a8a89c" marker-end="url(#arrW)"/>
+          <line x1="300" y1="315" x2="378" y2="272" stroke="#a8a89c" marker-end="url(#arrW)"/>
+          <rect x="380" y="240" width="120" height="46" rx="4" fill="#1c2330" stroke="#c084ce"/>
+          <text x="440" y="261" text-anchor="middle" fill="#c084ce">Decision</text>
+          <text x="440" y="277" text-anchor="middle" font-size="10" fill="#a8a89c">(rules apply)</text>
+          <line x1="500" y1="263" x2="528" y2="263" stroke="#a8a89c" marker-end="url(#arrW)"/>
+          <rect x="530" y="240" width="120" height="46" rx="4" fill="#1c2330" stroke="#7cb1a8"/>
+          <text x="590" y="268" text-anchor="middle" fill="#7cb1a8">Activate</text>
+        </g>
+      </svg>
+      <div class="diagram-caption">SEQUENTIAL FLOWS GO STRAIGHT · PARALLEL FLOWS FAN OUT AND CONVERGE</div>
+    </div>
+
+    <div class="analogy">
+      <p><strong>Sequential workflow</strong> = visa application. First the embassy officer checks your form. Then it goes to the consular officer. Then to the ambassador. Each one approves before passing to the next.</p>
+      <p><strong>Parallel workflow</strong> = PhD thesis defense. The thesis is sent to 4 examiners simultaneously. The committee then combines their reviews — if all approve, you pass. If two reject, it's sent back for revision.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon config">C</div>
+        <div>
+          <div class="sub-block-title">How to access</div>
+          <h3>Reaching the rule-based workflow configuration</h3>
+        </div>
+      </div>
+      <p>Two equivalent ways:</p>
+      <ol class="numbered">
+        <li><strong>T-Code</strong>: <code>USMD_SSW_RULE</code> — opens the rule-based workflow decision tables directly.</li>
+        <li><strong>IMG Path</strong>:
+          <div class="path-block">
+            <span class="terminal">MDG IMG</span><span class="arrow">→</span>General Settings<span class="arrow">→</span>Process Modeling<span class="arrow">→</span>Workflow<span class="arrow">→</span>Rule-Based Workflow<span class="arrow">→</span><span class="terminal">Configure Rule-Based Workflow</span>
+          </div>
+        </li>
+      </ol>
+      <p>Inside, you will find:</p>
+      <ul class="bullet">
+        <li><strong>Define Change Request Steps for Workflow</strong> — Section 06.</li>
+        <li><strong>Define Change Request Actions</strong> — Section 07.</li>
+        <li><strong>Define Change Request Step Types and Assign Actions</strong> — Section 08.</li>
+        <li><strong>Define Service Names for Rule-Based Workflow</strong> — Section 08 (custom logic).</li>
+        <li><strong>BAdIs (Business Add-Ins)</strong> — for custom user determination, approval logic, etc.</li>
+      </ul>
+    </div>
+
+    <div class="what-if">
+      <p>Without a workflow engine, the CR would sit forever in step 00 after submission. There would be no one to "push" it to the next person, no rules to decide who that person is, and no automation to detect approval and activate the data. The workflow is the heart that keeps the CR flowing.</p>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 12 — BIG PICTURE ============ -->
+  <section id="s12">
+    <div class="section-head">
+      <div class="section-num">12</div>
+      <h2>The Big Picture — End-to-End</h2>
+    </div>
+    <p class="section-subtitle">Bringing every concept together in one full journey.</p>
+
+    <h3>The configuration order (one-time setup)</h3>
+    <div class="config-steps">
+      <div class="config-step">
+        <h5>Define the Data Model</h5>
+        <p>Yesterday's class. e.g. MM for material — including the Main Entity Type (Material) and its Business Object Type (194).</p>
+      </div>
+      <div class="config-step">
+        <h5>Confirm the Logical Actions you'll use</h5>
+        <p>Browse SAP's standard list (CREATE, CHANGE, etc.) — you only use, never create.</p>
+      </div>
+      <div class="config-step">
+        <h5>Create Business Activities</h5>
+        <p>e.g. MAT1 = CREATE + 194 (Material). One per logical-action × BO-type combination.</p>
+      </div>
+      <div class="config-step">
+        <h5>Define Change Request Actions</h5>
+        <p>Reuse SAP-delivered (Approve, Reject, etc.) and add custom actions if needed.</p>
+      </div>
+      <div class="config-step">
+        <h5>Define Step Types &amp; assign Actions</h5>
+        <p>Bundle actions into reusable presets (Step Type 2 = Approve + Reject in order).</p>
+      </div>
+      <div class="config-step">
+        <h5>Create the Change Request Type</h5>
+        <p>e.g. MAT01 = MM data model + MAT1 activity + WS60800086 workflow + UI app/config.</p>
+      </div>
+      <div class="config-step">
+        <h5>Define Change Request Steps for the CR Type</h5>
+        <p>e.g. for MAT01: step 00 (initial), step 10 (approval — step type 2), step 90 (final), step 99 (done).</p>
+      </div>
+      <div class="config-step">
+        <h5>Configure the Rule-Based Workflow Decision Tables</h5>
+        <p>Wire each step to a user/role and define routing rules (sequential or parallel).</p>
+      </div>
+      <div class="config-step">
+        <h5>Configure UI Determination</h5>
+        <p>Map (CR Type + step + role) to (UI app + UI configuration).</p>
+      </div>
+      <div class="config-step">
+        <h5>(Optional) Configure Editions</h5>
+        <p>Group CRs into editions if this CR Type uses time-bound coordinated releases (mostly MDG-F).</p>
+      </div>
+    </div>
+
+    <h3>The runtime journey (what happens when a user creates a CR)</h3>
+    <div class="diagram-container">
+      <svg viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#d97757"/>
+          </marker>
+        </defs>
+
+        <!-- User -->
+        <rect x="30" y="40" width="160" height="60" rx="6" fill="#1c2330" stroke="#7cb1a8" stroke-width="1.5"/>
+        <text x="110" y="62" text-anchor="middle" fill="#7cb1a8" font-family="JetBrains Mono" font-size="10" letter-spacing="1">USER (Requester)</text>
+        <text x="110" y="82" text-anchor="middle" fill="#e8e6e0" font-family="Fraunces" font-size="14">Opens MDG NWBC</text>
+
+        <line x1="190" y1="70" x2="218" y2="70" stroke="#d97757" stroke-width="1.5" marker-end="url(#arrR)"/>
+
+        <!-- Pick CR Type -->
+        <rect x="220" y="40" width="180" height="60" rx="6" fill="#1c2330" stroke="#d97757" stroke-width="1.5"/>
+        <text x="310" y="62" text-anchor="middle" fill="#d97757" font-family="JetBrains Mono" font-size="10" letter-spacing="1">PICK CR TYPE</text>
+        <text x="310" y="82" text-anchor="middle" fill="#e8e6e0" font-family="Fraunces" font-size="14">MAT01 — Create Mat'l</text>
+
+        <line x1="400" y1="70" x2="428" y2="70" stroke="#d97757" stroke-width="1.5" marker-end="url(#arrR)"/>
+
+        <!-- UI Determination -->
+        <rect x="430" y="40" width="200" height="60" rx="6" fill="#1c2330" stroke="#6b9bd1" stroke-width="1.5"/>
+        <text x="530" y="62" text-anchor="middle" fill="#6b9bd1" font-family="JetBrains Mono" font-size="10" letter-spacing="1">UI DETERMINATION</text>
+        <text x="530" y="82" text-anchor="middle" fill="#e8e6e0" font-family="Fraunces" font-size="14">Loads draft screen</text>
+
+        <line x1="630" y1="70" x2="658" y2="70" stroke="#d97757" stroke-width="1.5" marker-end="url(#arrR)"/>
+
+        <!-- Fill & submit -->
+        <rect x="660" y="40" width="200" height="60" rx="6" fill="#1c2330" stroke="#e8b059" stroke-width="1.5"/>
+        <text x="760" y="62" text-anchor="middle" fill="#e8b059" font-family="JetBrains Mono" font-size="10" letter-spacing="1">FILL + SUBMIT</text>
+        <text x="760" y="82" text-anchor="middle" fill="#e8e6e0" font-family="Fraunces" font-size="14">CR # generated</text>
+
+        <!-- arrow down -->
+        <line x1="760" y1="100" x2="760" y2="128" stroke="#d97757" stroke-width="1.5" marker-end="url(#arrR)"/>
+
+        <!-- Workflow starts -->
+        <rect x="660" y="130" width="200" height="60" rx="6" fill="#1c2330" stroke="#c084ce" stroke-width="1.5"/>
+        <text x="760" y="152" text-anchor="middle" fill="#c084ce" font-family="JetBrains Mono" font-size="10" letter-spacing="1">WORKFLOW STARTS</text>
+        <text x="760" y="172" text-anchor="middle" fill="#e8e6e0" font-family="Fraunces" font-size="14">WS60800086</text>
+
+        <line x1="660" y1="160" x2="632" y2="160" stroke="#d97757" stroke-width="1.5" marker-end="url(#arrR)"/>
+
+        <!-- step 10 -->
+        <rect x="430" y="130" width="200" height="60" rx="6" fill="#1c2330" stroke="#e8b059" stroke-width="1.5"/>
+        <text x="530" y="152" text-anchor="middle" fill="#e8b059" font-family="JetBrains Mono" font-size="10" letter-spacing="1">STEP 10 · APPROVER 1</text>
+        <text x="530" y="172" text-anchor="middle" fill="#e8e6e0" font-family="Fraunces" font-size="14">Step Type 2 buttons</text>
+
+        <line x1="430" y1="160" x2="402" y2="160" stroke="#d97757" stroke-width="1.5" marker-end="url(#arrR)"/>
+
+        <!-- step 20 -->
+        <rect x="220" y="130" width="180" height="60" rx="6" fill="#1c2330" stroke="#e8b059" stroke-width="1.5"/>
+        <text x="310" y="152" text-anchor="middle" fill="#e8b059" font-family="JetBrains Mono" font-size="10" letter-spacing="1">STEP 20 · APPROVER 2</text>
+        <text x="310" y="172" text-anchor="middle" fill="#e8e6e0" font-family="Fraunces" font-size="14">Approve / Reject</text>
+
+        <line x1="220" y1="160" x2="190" y2="160" stroke="#d97757" stroke-width="1.5" marker-end="url(#arrR)"/>
+
+        <!-- step 90 -->
+        <rect x="30" y="130" width="160" height="60" rx="6" fill="#1c2330" stroke="#7cb1a8" stroke-width="1.5"/>
+        <text x="110" y="152" text-anchor="middle" fill="#7cb1a8" font-family="JetBrains Mono" font-size="10" letter-spacing="1">STEP 90 · FINAL CHECK</text>
+        <text x="110" y="172" text-anchor="middle" fill="#e8e6e0" font-family="Fraunces" font-size="14">Activate data</text>
+
+        <line x1="110" y1="190" x2="110" y2="218" stroke="#d97757" stroke-width="1.5" marker-end="url(#arrR)"/>
+
+        <!-- step 99 -->
+        <rect x="30" y="220" width="160" height="60" rx="6" fill="#1c2330" stroke="#7cb1a8" stroke-width="2"/>
+        <text x="110" y="242" text-anchor="middle" fill="#7cb1a8" font-family="JetBrains Mono" font-size="10" letter-spacing="1">STEP 99 · COMPLETED</text>
+        <text x="110" y="262" text-anchor="middle" fill="#e8e6e0" font-family="Fraunces" font-size="14">CR closed</text>
+
+        <line x1="190" y1="250" x2="218" y2="250" stroke="#d97757" stroke-width="1.5" marker-end="url(#arrR)"/>
+
+        <!-- Active table -->
+        <rect x="220" y="220" width="200" height="60" rx="6" fill="#1c2330" stroke="#d97757" stroke-width="2"/>
+        <text x="320" y="242" text-anchor="middle" fill="#d97757" font-family="JetBrains Mono" font-size="10" letter-spacing="1">ACTIVE TABLES (MARA)</text>
+        <text x="320" y="262" text-anchor="middle" fill="#e8e6e0" font-family="Fraunces" font-size="14">Material is LIVE</text>
+
+        <!-- Revision loop -->
+        <path d="M 530 190 Q 530 320 230 320 Q 100 320 100 192" stroke="#d97757" stroke-width="1" stroke-dasharray="4 3" fill="none" marker-end="url(#arrR)"/>
+        <text x="430" y="335" text-anchor="middle" fill="#d97757" font-family="JetBrains Mono" font-size="10" letter-spacing="1">REJECT → revision (91/92/93)</text>
+
+        <!-- Concepts annotated -->
+        <text x="450" y="380" text-anchor="middle" fill="#a8a89c" font-family="JetBrains Mono" font-size="10" letter-spacing="1">EACH BOX USES → CR Type · Business Activity · Logical Action · Step Type · Action · UI Determination · Workflow</text>
+      </svg>
+      <div class="diagram-caption">RUNTIME · FROM CLICK TO ACTIVATION</div>
+    </div>
+
+    <h3>Concept-by-concept cheat sheet</h3>
+    <div class="accordion">
+      <div class="accordion-item">
+        <button class="accordion-header">Change Request <span class="accordion-icon">+</span></button>
+        <div class="accordion-body">
+          <p><strong>Is:</strong> the permission-slip envelope around any master data change.<br>
+          <strong>Why:</strong> ensures governance, audit, approval.<br>
+          <strong>Linked to:</strong> CR Type, Workflow, Master data record.<br>
+          <strong>Without it:</strong> no controlled master data updates possible.</p>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <button class="accordion-header">CR Header <span class="accordion-icon">+</span></button>
+        <div class="accordion-body">
+          <p><strong>Is:</strong> the metadata cover of a CR (CR Type, data model, workflow, UI references).<br>
+          <strong>Why:</strong> tells the system what kind of CR this is.<br>
+          <strong>Configured via:</strong> Change Request Type.<br>
+          <strong>Without it:</strong> system can't interpret the CR.</p>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <button class="accordion-header">Logical Action <span class="accordion-icon">+</span></button>
+        <div class="accordion-body">
+          <p><strong>Is:</strong> the verb — CREATE, CHANGE, DELETE, BLOCK, etc.<br>
+          <strong>Why:</strong> standardized vocabulary across data models.<br>
+          <strong>Linked to:</strong> Business Activity (which then attaches to CR Type).<br>
+          <strong>Without it:</strong> system can't know what kind of operation a CR performs.</p>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <button class="accordion-header">Business Activity <span class="accordion-icon">+</span></button>
+        <div class="accordion-body">
+          <p><strong>Is:</strong> the bridge — binds Logical Action + Business Object Type.<br>
+          <strong>Why:</strong> reusable building block; defines verb+noun combinations.<br>
+          <strong>Fields:</strong> Activity code, Description, BO Type, Logical Action.<br>
+          <strong>Without it:</strong> every CR Type would re-declare action+object directly — chaos.</p>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <button class="accordion-header">Change Request Type <span class="accordion-icon">+</span></button>
+        <div class="accordion-body">
+          <p><strong>Is:</strong> the reusable template users pick when creating a CR.<br>
+          <strong>Why:</strong> standardizes the configuration of similar CRs.<br>
+          <strong>Fields:</strong> Code, Description, Data Model, Single-Object flag, Main Entity Type, Business Activity, Workflow Template, UI App, UI Config, Edition.<br>
+          <strong>Without it:</strong> users would have to manually configure every CR.</p>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <button class="accordion-header">CR Steps <span class="accordion-icon">+</span></button>
+        <div class="accordion-body">
+          <p><strong>Is:</strong> numbered checkpoints in the CR's lifecycle (00, 10, 20, …, 90, 99).<br>
+          <strong>Why:</strong> tracks where the CR is; controls who can act on it.<br>
+          <strong>Fields:</strong> CR Type, Step Number, Description, Step Type.<br>
+          <strong>Without it:</strong> no workflow possible — CR can't progress.</p>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <button class="accordion-header">CR Actions <span class="accordion-icon">+</span></button>
+        <div class="accordion-body">
+          <p><strong>Is:</strong> the buttons users click — Approve, Reject, Agree, etc.<br>
+          <strong>Why:</strong> captures user decisions to advance the workflow.<br>
+          <strong>Linked to:</strong> Step Type (which controls which actions appear at which step).<br>
+          <strong>Without it:</strong> CR sits forever; no way to express decisions.</p>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <button class="accordion-header">Step Types <span class="accordion-icon">+</span></button>
+        <div class="accordion-body">
+          <p><strong>Is:</strong> reusable presets — "this group of buttons in this order."<br>
+          <strong>Why:</strong> connects steps to actions without manual wiring at every step.<br>
+          <strong>Fields:</strong> Step Type code, Description, Sequence, Action.<br>
+          <strong>Without it:</strong> step-action wiring becomes a maintenance nightmare.</p>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <button class="accordion-header">UI Determination <span class="accordion-icon">+</span></button>
+        <div class="accordion-body">
+          <p><strong>Is:</strong> the rule mapping (CR Type + step + role) → (UI app + UI config).<br>
+          <strong>Why:</strong> different screens for different stages and roles.<br>
+          <strong>Fields:</strong> CR Type, Step, Role, UI App, UI Config.<br>
+          <strong>Without it:</strong> every user sees the same generic screen — confusing UX.</p>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <button class="accordion-header">Editions <span class="accordion-icon">+</span></button>
+        <div class="accordion-body">
+          <p><strong>Is:</strong> grouped, time-bound bundles of CRs released together.<br>
+          <strong>Why:</strong> synchronized release of related master data (mainly MDG-F).<br>
+          <strong>Fields:</strong> Edition Type, Data Model, Description, Type Indicator.<br>
+          <strong>Without it:</strong> uncoordinated activation of related reference data.</p>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <button class="accordion-header">Workflow <span class="accordion-icon">+</span></button>
+        <div class="accordion-body">
+          <p><strong>Is:</strong> the engine that routes the CR through its steps.<br>
+          <strong>Why:</strong> automates handoffs; enforces rules; sequential or parallel routing.<br>
+          <strong>Standard template:</strong> WS60800086 (rule-based).<br>
+          <strong>Without it:</strong> CR is created but never moves anywhere.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>END OF DEEP DIVE · 11 modules · field-by-field detail</p>
+    <p style="margin-top:8px;">Tip: click any accordion or step pip · use <kbd>Ctrl/Cmd</kbd> + <kbd>F</kbd> to find specific fields fast</p>
+  </footer>
+
+</div>
+
+<script>
+  document.addEventListener('scroll', () => {
+    const h = document.documentElement;
+    const p = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+    document.getElementById('progress').style.width = p + '%';
+  });
+
+  document.querySelectorAll('.accordion-header').forEach(h => {
+    h.addEventListener('click', () => {
+      h.parentElement.classList.toggle('open');
+    });
+  });
+</script>
+
+</body>
+</html>
