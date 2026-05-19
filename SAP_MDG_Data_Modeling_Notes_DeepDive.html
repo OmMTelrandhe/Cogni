@@ -1,0 +1,3197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SAP MDG — Data Modeling · The Complete Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,800&family=JetBrains+Mono:wght@400;500;600&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1419;
+    --bg-2: #161b22;
+    --bg-3: #1c2330;
+    --bg-4: #232b3a;
+    --ink: #e8e6e0;
+    --ink-2: #a8a89c;
+    --ink-3: #6b6f78;
+    --accent: #d97757;
+    --accent-2: #e8b059;
+    --accent-3: #7cb1a8;
+    --accent-4: #c084ce;
+    --accent-5: #6b9bd1;
+    --line: rgba(232, 230, 224, 0.08);
+    --line-2: rgba(232, 230, 224, 0.15);
+    --code-bg: #0a0d12;
+    --success: #7cb1a8;
+    --warn: #e8b059;
+    --danger: #d97757;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter Tight', sans-serif;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 60px 32px 120px;
+  }
+
+  /* ===== Header ===== */
+  header.hero {
+    border-bottom: 1px solid var(--line-2);
+    padding-bottom: 48px;
+    margin-bottom: 56px;
+  }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .eyebrow::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    max-width: 200px;
+  }
+  h1.title {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-size: clamp(42px, 6vw, 72px);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    margin-bottom: 24px;
+  }
+  h1.title em {
+    font-style: italic;
+    color: var(--accent-2);
+    font-weight: 400;
+  }
+  .subtitle {
+    font-size: 18px;
+    color: var(--ink-2);
+    max-width: 760px;
+    line-height: 1.6;
+  }
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 24px;
+    margin-top: 40px;
+    padding-top: 32px;
+    border-top: 1px dashed var(--line-2);
+  }
+  .meta-item .meta-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--ink-3);
+    margin-bottom: 6px;
+  }
+  .meta-item .meta-value {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    color: var(--ink);
+  }
+
+  /* ===== TOC ===== */
+  .toc {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 28px 32px;
+    margin-bottom: 64px;
+  }
+  .toc-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 18px;
+  }
+  .toc ol {
+    list-style: none;
+    counter-reset: toc;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 4px 32px;
+  }
+  .toc li {
+    counter-increment: toc;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .toc li::before {
+    content: counter(toc, decimal-leading-zero);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    margin-right: 14px;
+  }
+  .toc a {
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 15px;
+    transition: color 0.2s;
+  }
+  .toc a:hover { color: var(--accent-2); }
+
+  /* ===== Sections ===== */
+  section {
+    margin-bottom: 120px;
+    scroll-margin-top: 24px;
+  }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+  }
+  h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(30px, 4.5vw, 46px);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    flex: 1;
+  }
+  .section-subtitle {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--accent-2);
+    font-size: 18px;
+    margin-bottom: 36px;
+  }
+
+  /* sub-section blocks */
+  .sub-block {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 28px 32px;
+    margin: 24px 0;
+  }
+  .sub-block-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line-2);
+  }
+  .sub-block-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .sub-block-icon.what { background: var(--accent-2); }
+  .sub-block-icon.why { background: var(--accent-3); }
+  .sub-block-icon.use { background: var(--accent-4); }
+  .sub-block-icon.link { background: var(--accent-5); }
+  .sub-block-icon.config { background: var(--accent); }
+  .sub-block-icon.fields { background: var(--accent-2); }
+  .sub-block-icon.warn { background: var(--danger); }
+  .sub-block-icon.real { background: var(--accent-3); }
+  .sub-block-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .sub-block h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 22px;
+    margin: 0;
+    color: var(--ink);
+  }
+  .sub-block p { margin-bottom: 12px; color: var(--ink); line-height: 1.7; }
+  .sub-block p:last-child { margin-bottom: 0; }
+
+  h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 26px;
+    letter-spacing: -0.01em;
+    margin: 40px 0 16px;
+    color: var(--ink);
+  }
+  h4 {
+    font-family: 'Inter Tight', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent-2);
+    margin: 28px 0 12px;
+  }
+  p { margin-bottom: 16px; color: var(--ink); }
+  p.lead {
+    font-size: 19px;
+    line-height: 1.6;
+    color: var(--ink);
+    margin-bottom: 28px;
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+  }
+
+  /* ===== Real-life analogy ===== */
+  .analogy {
+    background: linear-gradient(135deg, rgba(124, 177, 168, 0.08), rgba(192, 132, 206, 0.04));
+    border: 1px dashed var(--accent-3);
+    border-radius: 6px;
+    padding: 26px 30px;
+    margin: 28px 0;
+    position: relative;
+  }
+  .analogy::before {
+    content: '🌐 REAL-LIFE PARALLEL';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: var(--bg);
+    padding: 0 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--accent-3);
+  }
+  .analogy p { margin-bottom: 10px; }
+  .analogy p:last-child { margin-bottom: 0; }
+
+  /* ===== What-if-not box ===== */
+  .what-if {
+    background: rgba(217, 119, 87, 0.06);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    padding: 20px 26px;
+    margin: 24px 0;
+  }
+  .what-if::before {
+    content: '⚠  WHAT IF THIS DIDN\'T EXIST?';
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  /* ===== Code/Path ===== */
+  code, .path {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: var(--code-bg);
+    color: var(--accent-2);
+    padding: 2px 7px;
+    border-radius: 3px;
+    border: 1px solid var(--line);
+  }
+  .path-block {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: var(--code-bg);
+    padding: 18px 22px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    color: var(--ink-2);
+    margin: 16px 0;
+    overflow-x: auto;
+    line-height: 1.9;
+  }
+  .path-block .arrow { color: var(--accent); margin: 0 8px; }
+  .path-block .terminal { color: var(--accent-2); }
+  .path-block .start { color: var(--accent-3); }
+
+  /* ===== Pill/Tag ===== */
+  .pill {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 11px;
+    border-radius: 20px;
+    background: rgba(217, 119, 87, 0.12);
+    color: var(--accent);
+    border: 1px solid rgba(217, 119, 87, 0.3);
+    margin: 4px 4px 4px 0;
+  }
+  .pill.teal { background: rgba(124, 177, 168, 0.12); color: var(--accent-3); border-color: rgba(124, 177, 168, 0.3); }
+  .pill.amber { background: rgba(232, 176, 89, 0.12); color: var(--accent-2); border-color: rgba(232, 176, 89, 0.3); }
+  .pill.mauve { background: rgba(192, 132, 206, 0.12); color: var(--accent-4); border-color: rgba(192, 132, 206, 0.3); }
+  .pill.blue { background: rgba(107, 155, 209, 0.12); color: var(--accent-5); border-color: rgba(107, 155, 209, 0.3); }
+
+  /* ===== Field table - the star of this version ===== */
+  .field-table {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    margin: 20px 0;
+    overflow: hidden;
+  }
+  .field-table-head {
+    background: var(--bg-3);
+    padding: 14px 22px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent-2);
+    border-bottom: 1px solid var(--line-2);
+  }
+  .field-row {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .field-row:last-child { border-bottom: none; }
+  .field-row:hover { background: var(--bg-3); }
+  .field-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent-2);
+    font-weight: 500;
+  }
+  .field-name .required {
+    color: var(--danger);
+    margin-left: 4px;
+  }
+  .field-desc {
+    color: var(--ink);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .field-desc strong { color: var(--accent-2); }
+  .field-desc .example {
+    display: block;
+    margin-top: 6px;
+    color: var(--ink-2);
+    font-size: 13px;
+    font-style: italic;
+  }
+  @media (max-width: 700px) {
+    .field-row { grid-template-columns: 1fr; gap: 8px; }
+  }
+
+  /* ===== Linkage diagram ===== */
+  .diagram-container {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 32px;
+    margin: 28px 0;
+    overflow-x: auto;
+  }
+  .diagram-container svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+  .diagram-caption {
+    text-align: center;
+    color: var(--ink-3);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    margin-top: 16px;
+  }
+
+  /* ===== Tables ===== */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 24px 0;
+    font-size: 14px;
+  }
+  thead { background: var(--bg-3); }
+  th {
+    text-align: left;
+    padding: 14px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-2);
+    border-bottom: 1px solid var(--line-2);
+  }
+  td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink);
+    vertical-align: top;
+  }
+  tbody tr:hover { background: var(--bg-2); }
+  td code { font-size: 12px; }
+
+  /* ===== Lists ===== */
+  ul.bullet, ol.numbered {
+    margin: 16px 0 20px;
+    padding-left: 28px;
+  }
+  ul.bullet li, ol.numbered li {
+    margin-bottom: 12px;
+    color: var(--ink);
+    line-height: 1.7;
+  }
+  ul.bullet li::marker { color: var(--accent); }
+  ol.numbered li::marker { color: var(--accent); font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+
+  /* ===== Note callout ===== */
+  .note {
+    background: rgba(232, 176, 89, 0.07);
+    border: 1px solid rgba(232, 176, 89, 0.2);
+    padding: 18px 22px;
+    border-radius: 6px;
+    margin: 20px 0;
+    font-size: 14.5px;
+  }
+  .note strong { color: var(--accent-2); }
+  .note.tip {
+    background: rgba(124, 177, 168, 0.07);
+    border-color: rgba(124, 177, 168, 0.2);
+  }
+  .note.tip strong { color: var(--accent-3); }
+
+  /* ===== Where-it-stands flow ===== */
+  .position-flow {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 28px;
+    margin: 28px 0;
+  }
+  .position-flow-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent-4);
+    margin-bottom: 18px;
+    text-align: center;
+  }
+
+  /* ===== Accordion ===== */
+  .accordion-item {
+    border-bottom: 1px solid var(--line);
+  }
+  .accordion-header {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--ink);
+    padding: 20px 4px;
+    text-align: left;
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: color 0.2s;
+  }
+  .accordion-header:hover { color: var(--accent-2); }
+  .accordion-icon {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    color: var(--accent);
+    transition: transform 0.3s;
+    flex-shrink: 0;
+    margin-left: 12px;
+  }
+  .accordion-item.open .accordion-icon { transform: rotate(45deg); }
+  .accordion-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease, padding 0.5s ease;
+  }
+  .accordion-item.open .accordion-body {
+    max-height: 5000px;
+    padding: 4px 4px 28px;
+  }
+
+  /* ===== Progress bar ===== */
+  .progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    width: 0%;
+    z-index: 1000;
+    transition: width 0.1s;
+  }
+
+  /* ===== Term highlight ===== */
+  .term {
+    color: var(--accent-2);
+    font-weight: 500;
+    border-bottom: 1px dotted var(--accent-2);
+  }
+
+  /* ===== Footer ===== */
+  footer {
+    margin-top: 80px;
+    padding-top: 40px;
+    border-top: 1px solid var(--line-2);
+    text-align: center;
+    color: var(--ink-3);
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  kbd {
+    background: var(--bg-3);
+    border: 1px solid var(--line-2);
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-2);
+  }
+
+  /* mini stage indicator */
+  .stage-strip {
+    display: flex;
+    gap: 4px;
+    margin: 16px 0 24px;
+    overflow-x: auto;
+    padding: 4px 0;
+  }
+  .stage-pip {
+    flex: 1;
+    min-width: 90px;
+    padding: 10px 12px;
+    background: var(--bg-3);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--ink-3);
+    text-transform: uppercase;
+  }
+  .stage-pip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg);
+  }
+
+  /* ===== Configure steps ===== */
+  .config-steps {
+    counter-reset: cstep;
+    margin: 20px 0;
+  }
+  .config-step {
+    counter-increment: cstep;
+    background: var(--bg-3);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 20px 24px 20px 70px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .config-step::before {
+    content: counter(cstep);
+    position: absolute;
+    left: 20px;
+    top: 18px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .config-step h5 {
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    margin-bottom: 8px;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .config-step p { margin-bottom: 6px; font-size: 14px; }
+  .config-step p:last-child { margin-bottom: 0; }
+
+  .badge {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    padding: 2px 7px;
+    margin-top: 4px;
+    border-radius: 2px;
+    background: rgba(124, 177, 168, 0.15);
+    color: var(--accent-3);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<div class="wrap">
+
+  <!-- ============ HERO ============ -->
+  <header class="hero">
+    <div class="eyebrow">SAP MDG · Data Modeling · The Complete Field-by-Field Guide</div>
+    <h1 class="title">SAP Master Data Governance — <em>Data Modeling</em>, fully decoded</h1>
+    <p class="subtitle">A comprehensive, in-depth walkthrough of MDG Data Modeling. For each topic you'll find: what it is, why it exists, what it links to, what happens if you don't have it, exactly which fields you fill while configuring it, where it sits inside the data-model machinery, and the internal SAP concepts behind it (active vs staging, flex vs reuse, structures, mappings, key tables, BAdIs) — all in simple language with real-life analogies.</p>
+
+    <div class="meta-grid">
+      <div class="meta-item">
+        <div class="meta-label">Topics</div>
+        <div class="meta-value">15 in-depth modules</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Module</div>
+        <div class="meta-value">Data Modeling</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Approach</div>
+        <div class="meta-value">Field-by-field</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Standard Models</div>
+        <div class="meta-value">MM · BP · 0G</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ TOC ============ -->
+  <nav class="toc">
+    <div class="toc-title">Deep Dive Modules</div>
+    <ol>
+      <li><a href="#s1">Data Model — The Big Idea</a></li>
+      <li><a href="#s2">Edit Data Model · Header Fields</a></li>
+      <li><a href="#s3">Entity Types — Storage &amp; Use Types (Deep Dive)</a></li>
+      <li><a href="#s4">Attributes — Fields Inside Entities</a></li>
+      <li><a href="#s5">Relationships &amp; Cardinality</a></li>
+      <li><a href="#s6">Hierarchies</a></li>
+      <li><a href="#s7">Business Object Type Codes</a></li>
+      <li><a href="#s8">Entity Type ↔ BOTC Assignment</a></li>
+      <li><a href="#s9">Internal Key Prefixes &amp; Temporary Keys</a></li>
+      <li><a href="#s10">Authorization Relevance</a></li>
+      <li><a href="#s11">Generate Data Model-Specific Structures</a></li>
+      <li><a href="#s12">Active Area vs Staging Area</a></li>
+      <li><a href="#s13">Service Mapping Tool (SMT) — Mappings</a></li>
+      <li><a href="#s14">Extending Mappings</a></li>
+      <li><a href="#s15">Standard Data Models — MM · BP · 0G</a></li>
+      <li><a href="#s16">The Big Picture · Full Chain</a></li>
+    </ol>
+  </nav>
+
+  <!-- ============ MASTER MAP ============ -->
+  <section style="margin-bottom:80px;">
+    <h3 style="margin-top:0;">The chain of concepts — at a glance</h3>
+    <p>Data modeling builds the "shape" of master data inside MDG. Everything else (Change Requests, Workflows, UIs) sits on top of this shape. The configuration flow:</p>
+    <div class="path">
+      <span class="terminal">Data Model</span><span class="arrow">→</span>Entity Types<span class="arrow">→</span>Attributes<span class="arrow">→</span>Relationships<span class="arrow">→</span>Hierarchies<span class="arrow">→</span>BOTC<span class="arrow">→</span>Key Prefixes<span class="arrow">→</span>Authorization<span class="arrow">→</span>Generate Structures<span class="arrow">→</span><span class="terminal">SMT Mappings</span><span class="arrow">→</span>Activate
+    </div>
+    <p>Once activated, the data model is ready to be referenced by Change Request Types, Business Activities, and Workflows in the Process Modeling layer.</p>
+  </section>
+
+  <!-- ====================================================== -->
+  <!-- ============ SECTION 1: DATA MODEL ================== -->
+  <!-- ====================================================== -->
+  <section id="s1">
+    <div class="section-head">
+      <div class="section-num">01</div>
+      <h2>Data Model — The Big Idea</h2>
+    </div>
+    <p class="section-subtitle">The blueprint of master data — what kinds of objects exist, what fields they have, how they relate.</p>
+
+    <div class="stage-strip">
+      <div class="stage-pip active">Data Model</div>
+      <div class="stage-pip">Entity Type</div>
+      <div class="stage-pip">Attribute</div>
+      <div class="stage-pip">Relationship</div>
+      <div class="stage-pip">Hierarchy</div>
+      <div class="stage-pip">BOTC</div>
+      <div class="stage-pip">Keys</div>
+      <div class="stage-pip">Authorization</div>
+      <div class="stage-pip">Structures</div>
+      <div class="stage-pip">Mappings</div>
+      <div class="stage-pip">Standard Models</div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What is it</div>
+          <h3>The Data Model</h3>
+        </div>
+      </div>
+      <p>A <span class="term">Data Model</span> in MDG is the master blueprint that describes <em>what kind</em> of master data the system will govern. It defines the <strong>entities</strong> (what objects exist — material, vendor, customer, cost center), the <strong>attributes</strong> on those entities (fields like material number, description, plant), the <strong>relationships</strong> between entities (a material has plants, a plant has storage locations), and the <strong>hierarchies</strong> if any (cost-center hierarchy, account hierarchy).</p>
+      <p>Without a data model, MDG has nothing to govern. Process Modeling (CRs, workflows, UIs) only makes sense once a data model exists to point at.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon why">Y</div>
+        <div>
+          <div class="sub-block-title">Why we need it</div>
+          <h3>Why every MDG project starts here</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Shape definition</strong> — MDG needs to know "what does a vendor record look like? what fields does it have?" before it can validate, route, or approve a vendor change.</li>
+        <li><strong>Generation of structures</strong> — when activated, MDG generates dozens of ABAP database structures from the data model. These structures hold the staging and active data.</li>
+        <li><strong>UI generation</strong> — the screens for Change Requests are partially generated from the data model. Fields the data model defines become fields on the CR screen.</li>
+        <li><strong>Validation foundation</strong> — required fields, value tables, check tables — all anchored to the data model.</li>
+        <li><strong>Extensibility</strong> — adding a new field to a standard SAP data model (like MM or BP) is how you customize MDG for your organization's needs.</li>
+      </ul>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">The two deployment modes</div>
+          <h3>Flex Mode vs Reuse Mode — the foundational choice</h3>
+        </div>
+      </div>
+      <p>Every data model lives in one of two modes. This is the single most important architectural decision in MDG, and it affects everything downstream — where data is stored, how mappings work, whether ERP tables are used directly, and how the model behaves at runtime.</p>
+      <div class="field-table">
+        <div class="field-table-head">Flex Mode vs Reuse Mode — side by side</div>
+        <div class="field-row">
+          <div class="field-name">Reuse Mode</div>
+          <div class="field-desc"><strong>Active data is stored in existing ERP tables</strong> (MARA, BUT000, KNA1, LFA1). MDG only owns the <em>staging</em> area; once a CR is activated, data is written back to the standard ERP tables and read from there. The data model "reuses" the SAP-delivered ERP structures.<span class="example">Examples: MM (Material) and BP (Business Partner) — both Reuse Mode.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Flex Mode</div>
+          <div class="field-desc"><strong>Active data is stored in MDG-owned generated tables</strong>. There is no underlying ERP table — MDG creates its own tables from the data model. Useful when the data does not exist as standard master data in ECC/S4 (like custom reference data, finance-specific objects).<span class="example">Examples: 0G (Financials) — Flex Mode. Cost centers and accounts live in MDG-generated tables until activated.</span></div>
+        </div>
+      </div>
+      <p style="margin-top:14px;">This mode is selected via the <strong>Active Area</strong> field on the data model header (Section 02).</p>
+    </div>
+
+    <div class="what-if">
+      <p>If a data model didn't exist, MDG would have nothing to govern. Change Request Types could not be created (they need to point to a data model). Entity types, attributes, relationships — all of which the CR screens, validations, and workflows depend on — would have no place to live. The data model is literally the floor on which the rest of MDG is built.</p>
+    </div>
+
+    <div class="analogy">
+      <p>Think of a data model like the <strong>blueprint of a house</strong>. The blueprint says "this is a 3-bedroom house, with 2 bathrooms, a kitchen on the north side, the master bedroom on the east." Before any construction worker can lay a brick, the blueprint must exist. The bricks are like the data records, the rooms are entity types, the dimensions are attributes, and the corridors connecting rooms are relationships.</p>
+      <p>You don't keep redrawing the blueprint for every new house you build — you reuse it (Reuse Mode = standard SAP blueprint). Or, for a custom architectural style, you draw a brand-new blueprint (Flex Mode = MDG-only blueprint).</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon link">L</div>
+        <div>
+          <div class="sub-block-title">What it links to</div>
+          <h3>The Data Model's neighborhood</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Down (depends on)</strong>: nothing — the data model is the foundation.</li>
+        <li><strong>Contains</strong>: <span class="term">Entity Types</span>, <span class="term">Attributes</span>, <span class="term">Relationships</span>, <span class="term">Hierarchies</span>.</li>
+        <li><strong>Referenced by</strong>: <span class="term">Business Activities</span>, <span class="term">CR Types</span>, <span class="term">Workflows</span> — all of Process Modeling sits on top.</li>
+        <li><strong>Generates</strong>: ABAP structures (mapping, field-property, search, PDF, field-control, DRF), database tables (in Flex), staging area tables.</li>
+        <li><strong>Mapped to</strong>: ERP tables via the <span class="term">Service Mapping Tool (SMT)</span>.</li>
+      </ul>
+      <div class="path">
+        <span class="terminal">T-code</span><span class="arrow">→</span><span class="terminal">USMD_MODEL</span> · or · <span class="terminal">SPRO</span><span class="arrow">→</span>MDG<span class="arrow">→</span>General Settings<span class="arrow">→</span>Data Modeling<span class="arrow">→</span><span class="terminal">Edit Data Model</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================================================== -->
+  <!-- ============ SECTION 2: DATA MODEL HEADER ============ -->
+  <!-- ====================================================== -->
+  <section id="s2">
+    <div class="section-head">
+      <div class="section-num">02</div>
+      <h2>Edit Data Model · Header Fields</h2>
+    </div>
+    <p class="section-subtitle">The "front page" of every data model — what identifies it and how it behaves.</p>
+
+    <div class="stage-strip">
+      <div class="stage-pip">Data Model</div>
+      <div class="stage-pip active">Header</div>
+      <div class="stage-pip">Entity Type</div>
+      <div class="stage-pip">Attribute</div>
+      <div class="stage-pip">Relationship</div>
+      <div class="stage-pip">Hierarchy</div>
+      <div class="stage-pip">BOTC</div>
+      <div class="stage-pip">Keys</div>
+      <div class="stage-pip">Authorization</div>
+      <div class="stage-pip">Structures</div>
+      <div class="stage-pip">Mappings</div>
+      <div class="stage-pip">Standard Models</div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What is it</div>
+          <h3>The Data Model Header</h3>
+        </div>
+      </div>
+      <p>When you open a data model in transaction <code>USMD_MODEL</code>, the first thing you see is the <span class="term">header</span> — a small set of fields that identify the model and define its overall behavior. These fields are set once and rarely changed; they govern everything beneath.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon why">Y</div>
+        <div>
+          <div class="sub-block-title">Why these fields matter</div>
+          <h3>The header decides the system's behavior at every layer</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Identification</strong> — Data Model ID is referenced everywhere (CR Types, Business Activities, structures, mappings).</li>
+        <li><strong>Storage routing</strong> — the Active Area field decides whether data goes to MDG-owned tables (Flex) or back to ERP tables (Reuse).</li>
+        <li><strong>Transport &amp; namespace</strong> — Package and Namespace control where generated objects land and whether they are customer or SAP owned.</li>
+        <li><strong>Version control</strong> — Active Version flag tells the system which version is "live" (multiple inactive drafts can exist).</li>
+      </ul>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Fields you fill</div>
+          <h3>Data Model header — field reference</h3>
+        </div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-head">Header fields you configure</div>
+        <div class="field-row">
+          <div class="field-name">Data Model ID<span class="required">*</span></div>
+          <div class="field-desc"><strong>2-character unique code</strong> identifying the data model. Customer namespace starts with <code>Z</code> or <code>Y</code>; SAP standard models use 2-letter codes.<span class="example">Example: MM (Material), BP (Business Partner), 0G (Financials), ZM (custom model)</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Description<span class="required">*</span></div>
+          <div class="field-desc">Human-readable name displayed in selection lists.<span class="example">Example: "Material Master Data Model"</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Active Version</div>
+          <div class="field-desc"><strong>Indicator</strong> that this version of the model is currently active in the system. Only one version is active at a time; you can have multiple inactive draft versions for testing.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Active Area<span class="required">*</span></div>
+          <div class="field-desc"><strong>The single most important field on the header.</strong> Determines whether the data model is in Flex Mode or Reuse Mode.<br>· If empty → Flex Mode (MDG owns the active tables)<br>· If pointing to an ERP application → Reuse Mode (ERP tables are the active store)<span class="example">Example: For BP, Active Area points to the ERP BP application; for 0G, Active Area is empty (Flex).</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Package<span class="required">*</span></div>
+          <div class="field-desc"><strong>The ABAP package</strong> where generated structures and objects are stored. Determines transport assignment.<span class="example">Example: ZMDG_MODEL_ZM for a custom model.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Namespace</div>
+          <div class="field-desc"><strong>Prefix</strong> for generated objects. Distinguishes SAP-delivered from customer objects.<span class="example">Example: SAP standard uses /SAPDMC/, customer uses Z or Y.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Activation Status</div>
+          <div class="field-desc"><strong>Indicator</strong> showing whether the data model has been activated (structures generated, tables created). You cannot use a data model in Process Modeling until it is activated.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="what-if">
+      <p>If header fields were not set correctly, the data model wouldn't activate, generated structures would land in the wrong package (breaking transports), and the Active Area choice would silently send data to the wrong place — either lost in Flex tables you didn't expect, or overwriting ERP tables you didn't want to touch. The header is small but every field has big consequences.</p>
+    </div>
+
+    <div class="analogy">
+      <p>Think of the data model header like the <strong>title page of a book</strong>. It carries the book's name (Data Model ID), the author info (Package, Namespace), the edition number (Active Version), and the publisher's imprint that decides which warehouse it ships from (Active Area). Most readers skip the title page — but for the librarian (the SAP system), every line on that page determines where the book goes and how it is catalogued.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon link">L</div>
+        <div>
+          <div class="sub-block-title">What it links to</div>
+          <h3>Header's neighborhood</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Down</strong>: <span class="term">Entity Types</span> belong to this data model.</li>
+        <li><strong>Up</strong>: <span class="term">CR Types</span> reference the Data Model ID.</li>
+        <li><strong>Sideways</strong>: <span class="term">Active Area</span> drives Flex vs Reuse behavior throughout.</li>
+        <li><strong>Generates</strong>: structures into the <span class="term">Package</span> specified.</li>
+      </ul>
+      <div class="path">
+        <span class="terminal">USMD_MODEL</span><span class="arrow">→</span>open data model<span class="arrow">→</span>header section
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================================================== -->
+  <!-- ====================================================== -->
+  <!-- ============ SECTION 3: STORAGE & USE TYPES ========= -->
+  <!-- ====================================================== -->
+  <section id="s3">
+    <div class="section-head">
+      <div class="section-num">03</div>
+      <h2>Entity Types — Storage &amp; Use Types (Deep Dive)</h2>
+    </div>
+    <p class="section-subtitle">The single most confused topic in MDG, fully decoded — every type, every combination, every tricky scenario.</p>
+
+    <div class="stage-strip">
+      <div class="stage-pip">Data Model</div>
+      <div class="stage-pip">Header</div>
+      <div class="stage-pip active">Entity Type</div>
+      <div class="stage-pip">Attribute</div>
+      <div class="stage-pip">Relationship</div>
+      <div class="stage-pip">Hierarchy</div>
+      <div class="stage-pip">BOTC</div>
+      <div class="stage-pip">Keys</div>
+      <div class="stage-pip">Authorization</div>
+      <div class="stage-pip">Structures</div>
+      <div class="stage-pip">Mappings</div>
+      <div class="stage-pip">Standard Models</div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">The simplest way to understand it</div>
+          <h3>What the Storage &amp; Use Type really decides</h3>
+        </div>
+      </div>
+      <p>When you create an entity in MDG, you must tell the system <strong>three things</strong> about it:</p>
+      <ol class="numbered">
+        <li><strong>Does this entity have its own key, or does it borrow one?</strong></li>
+        <li><strong>Does MDG need to store its data in a separate table, or just inside its parent?</strong></li>
+        <li><strong>Is this entity something users <em>create</em> via CRs, or is it a list of pre-existing values they just <em>pick from</em>?</strong></li>
+      </ol>
+      <p>The <span class="term">Storage and Use Type</span> (SU Type) is one single field that answers all three at once. There are four values — 1, 2, 3, 4 — and each is a different answer to those three questions.</p>
+    </div>
+
+    <h3>The four SU Types — at a glance</h3>
+
+    <div class="field-table">
+      <div class="field-table-head">Quick comparison: the 4 SU Types side by side</div>
+      <div class="field-row">
+        <div class="field-name">Type 1</div>
+        <div class="field-desc"><strong>"I am a king."</strong> Own key. Own storage table. Created via CR. <em>Can be searched, viewed, edited as its own thing.</em><span class="example">MATERIAL, BP_HEADER, COSTCENTER</span></div>
+      </div>
+      <div class="field-row">
+        <div class="field-name">Type 2</div>
+        <div class="field-desc"><strong>"I am a duke under a king."</strong> Has its own key. Own storage table. But cannot exist without a Type 1 parent. Multiple Type 2s per Type 1 possible.<span class="example">MATERIAL_PLANT (under MATERIAL), BP_ADDRESS (under BP_HEADER)</span></div>
+      </div>
+      <div class="field-row">
+        <div class="field-name">Type 3</div>
+        <div class="field-desc"><strong>"I am a notebook page inside the king's folder."</strong> No own key. Stored <em>inside</em> the parent's table (or in a tightly bound sub-table). Just extends the parent with extra fields. Cannot be queried alone.<span class="example">MATERIAL_BASIC_DATA, MATERIAL_PURCHASING_DATA — additional groups of fields for MATERIAL</span></div>
+      </div>
+      <div class="field-row">
+        <div class="field-name">Type 4</div>
+        <div class="field-desc"><strong>"I am the phone book everyone reads."</strong> A reference / lookup list. Other entities <em>point</em> to it but no one creates instances of it via a CR. Has a key (because lookups need keys) and attributes (because lookups have descriptions), but is not the subject of governance.<span class="example">INDUSTRY_SECTOR, COUNTRY, ACCOUNT_GROUP</span></div>
+      </div>
+    </div>
+
+    <!-- ============ TYPE 1 DEEP DIVE ============ -->
+    <h3 style="margin-top: 56px;">Type 1 — Independent Main Entity (the "King")</h3>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">Detailed behavior</div>
+          <h3>What makes Type 1 special</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Has its own primary key</strong> — a single field or a composite that uniquely identifies one record (e.g., MATNR for MATERIAL).</li>
+        <li><strong>Can be created independently</strong> — a CR can be opened just to create a MATERIAL, with nothing else.</li>
+        <li><strong>Gets its own staging table</strong> — generated automatically (e.g. <code>/1MD/MAT_OS01</code>).</li>
+        <li><strong>Has a BOTC assignment</strong> — must be linked to a Business Object Type Code (194 for material).</li>
+        <li><strong>Is the "main entity" of CR Types</strong> — when you configure a CR Type, the Main Entity field is always a Type 1 entity.</li>
+        <li><strong>Can use Internal or External key assignment</strong> — both are valid.</li>
+      </ul>
+      <p><strong>Tables generated for Type 1:</strong></p>
+      <ul class="bullet">
+        <li>One staging table (header data) → e.g. <code>/1MD/MAT_OS01</code></li>
+        <li>One key table → for tracking temporary keys and number range assignments</li>
+        <li>One active table (Flex mode only) — in Reuse mode, the active table is the standard ERP table (MARA)</li>
+      </ul>
+    </div>
+
+    <!-- ============ TYPE 2 DEEP DIVE ============ -->
+    <h3 style="margin-top: 56px;">Type 2 — Dependent Entity with Own Key (the "Duke")</h3>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">Detailed behavior</div>
+          <h3>What makes Type 2 different from Type 1</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Has a composite key</strong> — the parent's key + its own key field(s). Example: MATERIAL_PLANT's key is (MATERIAL_NUMBER + PLANT_CODE).</li>
+        <li><strong>Cannot exist alone</strong> — without a Type 1 parent, the Type 2 record is meaningless.</li>
+        <li><strong>Has its own staging table</strong> — separate from the parent's.</li>
+        <li><strong>Connected to parent via Qualifying relationship</strong> — the relationship "qualifies" the child by inheriting the parent's key.</li>
+        <li><strong>Allows multiple instances per parent</strong> — one MATERIAL can have many MATERIAL_PLANT records (one per plant).</li>
+        <li><strong>Typically uses External key assignment</strong> — the plant code is usually entered, not auto-generated. (Some cases use Internal, but External is most common.)</li>
+      </ul>
+      <p><strong>Tables generated for Type 2:</strong></p>
+      <ul class="bullet">
+        <li>One staging table — contains BOTH the parent's key AND its own key + its attributes</li>
+        <li>One active table (Flex) — same structure</li>
+      </ul>
+    </div>
+
+    <div class="analogy">
+      <h5>Parent &amp; child analogy for Type 1 vs Type 2</h5>
+      <p><strong>Type 1 = a Person</strong>: has their own ID (passport number). Can exist alone in the world.</p>
+      <p><strong>Type 2 = a Marriage</strong>: needs two people (the parent) to exist. Has its own ID (marriage certificate number), but the certificate only makes sense in the context of those people. You cannot have a "marriage" without the linked people.</p>
+    </div>
+
+    <!-- ============ TYPE 3 DEEP DIVE ============ -->
+    <h3 style="margin-top: 56px;">Type 3 — Dependent, Sub-table or Extension (the "Notebook")</h3>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">Detailed behavior</div>
+          <h3>The most confusing type — clarified</h3>
+        </div>
+      </div>
+      <p>Type 3 is the source of most confusion in MDG. Here's the clear truth:</p>
+      <ul class="bullet">
+        <li><strong>Type 3 has NO key of its own.</strong> It does not get a separate primary key field.</li>
+        <li><strong>It inherits its identity entirely from its parent.</strong> A Type 3 record exists only as "extra fields tied to one parent record."</li>
+        <li><strong>1:1 with its parent</strong> — exactly one Type 3 record per parent record. Never multiple.</li>
+        <li><strong>Usually generated as columns inside the parent's table</strong>, or as a tightly linked sub-table that the parent reads/writes atomically.</li>
+        <li><strong>Has attributes</strong> — yes! Type 3 carries fields. It's not just a flag; it's a group of attributes.</li>
+        <li><strong>Connected to parent via Leading relationship</strong> with cardinality 1:1.</li>
+      </ul>
+      <p style="margin-top:14px;"><strong>Why does Type 3 exist if it has no key?</strong> Because real-world master data has logical groupings. A MATERIAL has Basic Data, Purchasing Data, Sales Data, MRP Data — these are conceptually separate <em>groups of fields</em>, but they all belong to one material 1:1. Modeling them as separate Type 3 entities lets you:</p>
+      <ul class="bullet">
+        <li>Organize the data model cleanly into logical chunks.</li>
+        <li>Manage UI tabs (each Type 3 becomes a tab on the material screen).</li>
+        <li>Control authorization per data group ("only purchasing role can edit Purchasing Data").</li>
+        <li>Generate cleaner structures.</li>
+      </ul>
+    </div>
+
+    <div class="what-if">
+      <p><strong>Common confusion:</strong> "Type 3 has no key, so how does the system know which parent record it belongs to?" Answer: <em>through the relationship</em>. Type 3 always has a Leading relationship to its parent (a Type 1 or Type 2). The parent's key is what locates the Type 3 record. There is no separate Type 3 key field because there's no need for one — the parent's key IS the address.</p>
+    </div>
+
+    <!-- ============ TYPE 4 DEEP DIVE ============ -->
+    <h3 style="margin-top: 56px;">Type 4 — Reference / Check / Lookup Entity (the "Phone Book")</h3>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">Detailed behavior</div>
+          <h3>What Type 4 is, and what it is NOT</h3>
+        </div>
+      </div>
+      <p>Type 4 is for <strong>reference data</strong> — lists of valid values that other entities point to. Industry sectors, countries, account groups, units of measure. Things you don't "create new ones of" via a CR; they pre-exist as part of customizing.</p>
+      <ul class="bullet">
+        <li><strong>HAS a key</strong> — every lookup needs a code/ID to be referenced by (country = "IN", industry sector = "AUTOMOTIVE"). Type 4 absolutely has keys.</li>
+        <li><strong>HAS attributes</strong> — typically a description, maybe a few classification fields. Yes, Type 4 carries attributes.</li>
+        <li><strong>NOT created via CRs</strong> — the values are maintained as customizing or come from check tables in ERP. MDG just <em>knows about</em> them.</li>
+        <li><strong>Other entities REFERENCE it</strong> — typically via a <em>Referencing</em> relationship or as a check-table link on an attribute.</li>
+        <li><strong>Storage is usually external</strong> — Type 4 data often lives in standard ERP check tables (T005 for country, TVKO for sales orgs). MDG just maps to it.</li>
+      </ul>
+      <p><strong>Why have Type 4 in the data model at all?</strong></p>
+      <ul class="bullet">
+        <li>So the data model knows the value is valid and exists.</li>
+        <li>So search helps and dropdowns can be generated.</li>
+        <li>So the relationship from another entity has a target to point to.</li>
+        <li>So authorization can be enforced (some Type 4 lists are restricted by role).</li>
+      </ul>
+    </div>
+
+    <!-- ============ TRICKY SCENARIOS ============ -->
+    <h3 style="margin-top: 56px;">The tricky scenarios — where most people get confused</h3>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon use">U</div>
+        <div>
+          <div class="sub-block-title">Tricky scenario #1</div>
+          <h3>"You said Type 4 has attributes — but I see Type 4 attributes only when I create a Type 3 with a Qualifying relationship to the Type 4. How?"</h3>
+        </div>
+      </div>
+      <p>This is the classic point of confusion. Here's the truth:</p>
+      <ul class="bullet">
+        <li><strong>Type 4 has its OWN attributes</strong> — e.g. INDUSTRY_SECTOR has CODE, DESCRIPTION, INDUSTRY_GROUP. These are stored on the Type 4 lookup itself.</li>
+        <li><strong>But those attributes are not directly visible inside a Type 1 entity.</strong> A MATERIAL doesn't have INDUSTRY_SECTOR's DESCRIPTION as one of its own fields.</li>
+        <li><strong>The connection happens through a Type 3 sub-table</strong> — a small Type 3 entity belonging to the Type 1, which has a single field that <em>references</em> the Type 4 lookup's key (via a Qualifying or Referencing relationship).</li>
+      </ul>
+      <p><strong>Example:</strong></p>
+      <ol class="numbered">
+        <li>MATERIAL (Type 1) has many groups of data.</li>
+        <li>One group is "Industry Classification" — modeled as a Type 3 entity called MATERIAL_INDUSTRY.</li>
+        <li>MATERIAL_INDUSTRY has one attribute: INDUSTRY_SECTOR_CODE.</li>
+        <li>That code is validated against the Type 4 entity INDUSTRY_SECTOR (which itself has CODE + DESCRIPTION + GROUP).</li>
+        <li>On the UI, when the user picks an industry sector code in the material screen, MDG looks up the description from the Type 4 and displays it.</li>
+      </ol>
+      <p>So in practice: Type 4's attributes (description, group) ARE accessed, but always <em>through</em> the Type 3 → Type 4 reference, not directly inside the Type 1. The Type 3 is the bridge.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon use">U</div>
+        <div>
+          <div class="sub-block-title">Tricky scenario #2</div>
+          <h3>"But isn't Type 3 only in a Leading relationship with its parent? How can it have a Qualifying relationship with Type 4?"</h3>
+        </div>
+      </div>
+      <p>Type 3 has <strong>two different relationships</strong> simultaneously:</p>
+      <ol class="numbered">
+        <li><strong>Leading relationship (with its parent Type 1 or Type 2)</strong> — this is what makes Type 3 a "child of" the parent. The parent owns the Type 3.</li>
+        <li><strong>Qualifying or Referencing relationship (with a Type 4 lookup)</strong> — this is how the Type 3's attribute value gets validated against a list.</li>
+      </ol>
+      <p>The Leading relationship is "I belong to this parent." The Qualifying relationship is "my value must be one of these lookup codes." Two different purposes, two different relationships.</p>
+      <p><strong>Visualized:</strong></p>
+      <div class="path-block">
+MATERIAL (Type 1)<br>
+  ├── Leading relationship → MATERIAL_INDUSTRY (Type 3)<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── Qualifying / Referencing relationship → INDUSTRY_SECTOR (Type 4)
+      </div>
+      <p>So yes — Type 3 IS in a Leading relationship with its parent (always), AND can simultaneously have a Qualifying or Referencing relationship to a Type 4 lookup. These two relationships don't conflict because they go in different directions.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon use">U</div>
+        <div>
+          <div class="sub-block-title">Tricky scenario #3</div>
+          <h3>"Can Type 3 be the 'leading' side of a relationship — pointing to another entity?"</h3>
+        </div>
+      </div>
+      <p><strong>Yes</strong>, but with a specific meaning. When Type 3 is on the leading side of a relationship to a Type 4, it means: "this Type 3 sub-table's value must come from the Type 4 lookup." This is the Qualifying or Referencing direction we just discussed.</p>
+      <p>Type 3 is <strong>never</strong> the leading side of a relationship to a Type 1 or Type 2 — because Type 3 is dependent, it cannot "own" another entity. But it can <em>point to</em> a Type 4 lookup, which is a different kind of leading direction (a lookup reference, not an ownership).</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon use">U</div>
+        <div>
+          <div class="sub-block-title">Tricky scenario #4</div>
+          <h3>"Type 1 with External key vs Internal key — which generates temp keys?"</h3>
+        </div>
+      </div>
+      <p>This is where the Temporary Key Concept from Section 09 connects to SU Types:</p>
+      <div class="field-table">
+        <div class="field-table-head">Which entity types need temporary keys</div>
+        <div class="field-row">
+          <div class="field-name">Type 1 + External Key</div>
+          <div class="field-desc"><strong>No temp key needed.</strong> The user enters the key value (e.g. "M001") directly when creating the CR. The system uses this value throughout.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Type 1 + Internal Key</div>
+          <div class="field-desc"><strong>Temp key IS generated.</strong> The system assigns a temporary $-prefixed key (e.g. "$0000123") while the CR is in flight. At activation, the temp key is replaced by a real key drawn from the number range.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Type 2</div>
+          <div class="field-desc"><strong>Usually no temp key.</strong> Type 2's key is composite — parent key + its own key field(s). The parent's key may be a temp key (if Type 1 parent is Internal); the Type 2's own key field is usually external (entered by user).</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Type 3</div>
+          <div class="field-desc"><strong>Never.</strong> Type 3 has no own key — it inherits the parent's key entirely. No temp key concept applies.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Type 4</div>
+          <div class="field-desc"><strong>Never.</strong> Type 4 is not created via CRs. Its keys exist beforehand as customizing/check-table values.</div>
+        </div>
+      </div>
+      <p><strong>Summary rule:</strong> Only <strong>Type 1 with Internal Key Assignment</strong> needs a temporary key. Everything else either has the key entered by the user (External) or doesn't need one (Type 3, Type 4).</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon use">U</div>
+        <div>
+          <div class="sub-block-title">Tricky scenario #5</div>
+          <h3>Valid SU Type ↔ Relationship Type combinations</h3>
+        </div>
+      </div>
+      <p>Not all combinations of SU Type and Relationship Type are allowed. Here's the matrix MDG actually enforces:</p>
+      <div class="field-table">
+        <div class="field-table-head">From-Entity SU Type vs To-Entity SU Type — allowed relationship types</div>
+        <div class="field-row">
+          <div class="field-name">Type 1 → Type 1</div>
+          <div class="field-desc"><strong>Referencing</strong> (a material references a different material as base material). Cannot be Leading (two kings cannot own each other).</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Type 1 → Type 2</div>
+          <div class="field-desc"><strong>Leading + Qualifying</strong>. The Type 1 owns the Type 2, AND the Type 2's key is qualified by (composed using) the Type 1's key.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Type 1 → Type 3</div>
+          <div class="field-desc"><strong>Leading (1:1)</strong>. Type 1 owns the Type 3 sub-table. Cardinality must be 1:1 because Type 3 has no own key.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Type 1 → Type 4</div>
+          <div class="field-desc"><strong>Referencing</strong>. Type 1 looks up values from a Type 4 list. (Direct reference — usually used when the Type 4 value is a simple field on the Type 1.)</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Type 2 → Type 3</div>
+          <div class="field-desc"><strong>Leading (1:1)</strong>. Same logic as Type 1 → Type 3 — a Type 2 can also have its own Type 3 sub-tables.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Type 2 → Type 4</div>
+          <div class="field-desc"><strong>Referencing</strong>. Type 2 references a Type 4 lookup.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Type 3 → Type 4</div>
+          <div class="field-desc"><strong>Qualifying or Referencing</strong>. The Type 3 sub-table holds a value that must exist in the Type 4 lookup. Most common when the Type 3 represents a classification or grouping.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Type 4 → anything</div>
+          <div class="field-desc"><strong>Not allowed (Type 4 doesn't initiate relationships).</strong> Type 4 is always the <em>target</em> of relationships, never the source. Lookups don't "own" or "point to" other entities; other entities point to them.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ DEPENDENCIES SUMMARY ============ -->
+    <h3 style="margin-top: 56px;">Dependencies between the types — who needs whom</h3>
+
+    <div class="diagram-container" style="background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; padding: 32px; margin: 28px 0;">
+      <svg viewBox="0 0 760 360" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto;max-width:100%;height:auto;">
+        <defs>
+          <marker id="ar1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#d97757"/>
+          </marker>
+          <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#7cb1a8"/>
+          </marker>
+        </defs>
+
+        <!-- Type 1 -->
+        <rect x="280" y="30" width="200" height="70" rx="8" fill="#1c2330" stroke="#e8b059" stroke-width="2"/>
+        <text x="380" y="55" text-anchor="middle" fill="#e8b059" font-family="JetBrains Mono" font-size="11" letter-spacing="2">TYPE 1 · KING</text>
+        <text x="380" y="78" text-anchor="middle" fill="#e8e6e0" font-family="Fraunces" font-size="16">MATERIAL</text>
+        <text x="380" y="94" text-anchor="middle" fill="#a8a89c" font-family="JetBrains Mono" font-size="10">own key · own table · created by CR</text>
+
+        <!-- Type 2 -->
+        <rect x="40" y="160" width="200" height="70" rx="8" fill="#1c2330" stroke="#d97757" stroke-width="2"/>
+        <text x="140" y="185" text-anchor="middle" fill="#d97757" font-family="JetBrains Mono" font-size="11" letter-spacing="2">TYPE 2 · DUKE</text>
+        <text x="140" y="208" text-anchor="middle" fill="#e8e6e0" font-family="Fraunces" font-size="14">MATERIAL_PLANT</text>
+        <text x="140" y="224" text-anchor="middle" fill="#a8a89c" font-family="JetBrains Mono" font-size="9">own key (composite) · own table</text>
+
+        <!-- Type 3 -->
+        <rect x="280" y="160" width="200" height="70" rx="8" fill="#1c2330" stroke="#c084ce" stroke-width="2"/>
+        <text x="380" y="185" text-anchor="middle" fill="#c084ce" font-family="JetBrains Mono" font-size="11" letter-spacing="2">TYPE 3 · NOTEBOOK</text>
+        <text x="380" y="208" text-anchor="middle" fill="#e8e6e0" font-family="Fraunces" font-size="14">MATERIAL_INDUSTRY</text>
+        <text x="380" y="224" text-anchor="middle" fill="#a8a89c" font-family="JetBrains Mono" font-size="9">no own key · 1:1 with parent</text>
+
+        <!-- Type 4 -->
+        <rect x="520" y="160" width="200" height="70" rx="8" fill="#1c2330" stroke="#7cb1a8" stroke-width="2"/>
+        <text x="620" y="185" text-anchor="middle" fill="#7cb1a8" font-family="JetBrains Mono" font-size="11" letter-spacing="2">TYPE 4 · PHONEBOOK</text>
+        <text x="620" y="208" text-anchor="middle" fill="#e8e6e0" font-family="Fraunces" font-size="14">INDUSTRY_SECTOR</text>
+        <text x="620" y="224" text-anchor="middle" fill="#a8a89c" font-family="JetBrains Mono" font-size="9">lookup · not created via CR</text>
+
+        <!-- Arrows -->
+        <line x1="320" y1="100" x2="200" y2="158" stroke="#d97757" stroke-width="1.5" marker-end="url(#ar1)"/>
+        <text x="195" y="135" fill="#d97757" font-family="JetBrains Mono" font-size="10">Leading+Qualifying</text>
+
+        <line x1="380" y1="100" x2="380" y2="158" stroke="#d97757" stroke-width="1.5" marker-end="url(#ar1)"/>
+        <text x="395" y="135" fill="#d97757" font-family="JetBrains Mono" font-size="10">Leading 1:1</text>
+
+        <line x1="480" y1="195" x2="518" y2="195" stroke="#7cb1a8" stroke-width="1.5" marker-end="url(#ar2)"/>
+        <text x="486" y="187" fill="#7cb1a8" font-family="JetBrains Mono" font-size="9">Qualifying/Ref</text>
+
+        <!-- Bottom note about Type 4 -->
+        <text x="380" y="290" text-anchor="middle" fill="#e8b059" font-family="Fraunces" font-style="italic" font-size="14">Type 4 attributes (DESCRIPTION, GROUP) are accessed through the Type 3 → Type 4 reference</text>
+        <text x="380" y="315" text-anchor="middle" fill="#a8a89c" font-family="JetBrains Mono" font-size="10">Type 3 acts as the bridge between Type 1's storage and Type 4's lookup</text>
+      </svg>
+    </div>
+
+    <!-- ============ TABLES GENERATED SUMMARY ============ -->
+    <h3 style="margin-top: 56px;">What tables get generated for each SU Type</h3>
+
+    <div class="field-table">
+      <div class="field-table-head">Generated objects per SU Type</div>
+      <div class="field-row">
+        <div class="field-name">Type 1</div>
+        <div class="field-desc"><strong>Most tables generated.</strong><br>· Staging table (header)<br>· Key table (for temp keys + number ranges)<br>· Mapping structure<br>· Field property structure<br>· Search structure (if search-relevant attributes exist)<br>· Active table (Flex mode only)</div>
+      </div>
+      <div class="field-row">
+        <div class="field-name">Type 2</div>
+        <div class="field-desc"><strong>Independent staging table for itself.</strong><br>· Staging table with composite key columns (parent's key + own key + attributes)<br>· Mapping + field property structures<br>· Active table (Flex)</div>
+      </div>
+      <div class="field-row">
+        <div class="field-name">Type 3</div>
+        <div class="field-desc"><strong>Either a sub-table OR appended columns.</strong><br>· If MDG generates it as a sub-table → small staging table with parent's key as foreign key + the Type 3's attributes.<br>· If appended into parent → just adds columns to the parent's staging structure.<br>· No separate key table (no own key).</div>
+      </div>
+      <div class="field-row">
+        <div class="field-name">Type 4</div>
+        <div class="field-desc"><strong>Often no MDG-generated table.</strong> Usually pointed at an existing ERP check table (T005, TVKO, etc.). MDG just registers the mapping.<br>· In Flex Mode with custom Type 4 → a small lookup table is generated, but no staging variant.</div>
+      </div>
+    </div>
+
+    <!-- ============ MENTAL MODEL ============ -->
+    <h3 style="margin-top: 56px;">The mental model — when in doubt, ask these questions</h3>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon use">U</div>
+        <div>
+          <div class="sub-block-title">Decision tree</div>
+          <h3>How to pick the right SU Type for a new entity</h3>
+        </div>
+      </div>
+      <ol class="numbered">
+        <li><strong>Is this entity something users create via a CR?</strong>
+          <ul class="bullet">
+            <li>NO → it's a lookup/reference list → <strong>Type 4</strong>.</li>
+            <li>YES → go to step 2.</li>
+          </ul>
+        </li>
+        <li><strong>Can it exist on its own without a parent?</strong>
+          <ul class="bullet">
+            <li>YES → <strong>Type 1</strong>. Has its own key, its own life.</li>
+            <li>NO → go to step 3.</li>
+          </ul>
+        </li>
+        <li><strong>Can there be multiple of these per parent?</strong>
+          <ul class="bullet">
+            <li>YES (1:N) → <strong>Type 2</strong>. Needs its own key field(s) to distinguish siblings.</li>
+            <li>NO (1:1) → <strong>Type 3</strong>. Just a group of extra fields for the parent.</li>
+          </ul>
+        </li>
+      </ol>
+    </div>
+
+    <div class="analogy">
+      <h5>One unified analogy — the customer at a bank</h5>
+      <ul class="bullet">
+        <li><strong>Customer = Type 1</strong> — has unique customer ID. Created when account opens. Stands alone.</li>
+        <li><strong>Bank Accounts = Type 2</strong> — customer can have many (savings, current, fixed deposit). Each has its own account number, but cannot exist without the customer.</li>
+        <li><strong>KYC Details = Type 3</strong> — one block of KYC fields per customer (1:1). No separate "KYC ID" — just extra fields hung onto the customer.</li>
+        <li><strong>Account Type List (Savings/Current/FD) = Type 4</strong> — a fixed list of account types maintained by the bank. Customers don't create "new account types" via a form; they just pick one.</li>
+      </ul>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon link">L</div>
+        <div>
+          <div class="sub-block-title">What it all connects to</div>
+          <h3>SU Type's full neighborhood</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Determines</strong>: key behavior (temp keys for Type 1 Internal only), table generation (full set vs sub-table vs none), CR creatability (Type 1 only), BOTC linkage (Type 1 only).</li>
+        <li><strong>Determines allowed</strong>: relationship types (Leading from Type 1/2, Qualifying for Type 2 keys, Referencing to Type 4), cardinalities (1:1 mandatory for Type 3).</li>
+        <li><strong>Affects</strong>: UI layout (Type 3 = tabs, Type 2 = sub-screens, Type 4 = dropdowns), authorization (per-entity flag), search relevance.</li>
+        <li><strong>Cannot be changed after activation</strong> — once a data model with a chosen SU Type is activated and used in CRs, changing the type means destroying and recreating the entity. Choose carefully.</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <!-- ====================================================== -->
+  <!-- ============ SECTION 4: ATTRIBUTES =================== -->
+  <!-- ====================================================== -->
+  <section id="s4">
+    <div class="section-head">
+      <div class="section-num">04</div>
+      <h2>Attributes — Fields Inside Entities</h2>
+    </div>
+    <p class="section-subtitle">The data points each entity carries — what they describe, validate, and search on.</p>
+
+    <div class="stage-strip">
+      <div class="stage-pip">Data Model</div>
+      <div class="stage-pip">Header</div>
+      <div class="stage-pip">Entity Type</div>
+      <div class="stage-pip active">Attribute</div>
+      <div class="stage-pip">Relationship</div>
+      <div class="stage-pip">Hierarchy</div>
+      <div class="stage-pip">BOTC</div>
+      <div class="stage-pip">Keys</div>
+      <div class="stage-pip">Authorization</div>
+      <div class="stage-pip">Structures</div>
+      <div class="stage-pip">Mappings</div>
+      <div class="stage-pip">Standard Models</div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What is it</div>
+          <h3>The Attribute</h3>
+        </div>
+      </div>
+      <p>An <span class="term">Attribute</span> is a single field on an entity type — a piece of data the entity carries. Material has attributes like description, base unit of measure, material group, weight. Business Partner has name, address, tax classification, payment terms.</p>
+      <p>Each attribute is backed by an <strong>ABAP Data Dictionary data element</strong>, which decides its data type (CHAR, NUMC, DATS), length, and value range.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon why">Y</div>
+        <div>
+          <div class="sub-block-title">Why we need attributes</div>
+          <h3>Why each attribute is configured deliberately</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>They are the actual data</strong> — without attributes, an entity is an empty shell with only a key.</li>
+        <li><strong>They drive UI fields</strong> — fields on the CR screen are generated from the attributes.</li>
+        <li><strong>They drive validation</strong> — required flag, value range (via data element domain), and check tables all operate at the attribute level.</li>
+        <li><strong>They drive search</strong> — search-relevant attributes become searchable filters in the MDG UI.</li>
+        <li><strong>They drive structure generation</strong> — each attribute becomes a column in the generated structures and tables.</li>
+      </ul>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Fields you fill</div>
+          <h3>Attribute — field reference</h3>
+        </div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-head">Attribute fields</div>
+        <div class="field-row">
+          <div class="field-name">Attribute Name<span class="required">*</span></div>
+          <div class="field-desc"><strong>Unique name</strong> within the entity. Convention: ALL_CAPS, underscores.<span class="example">Example: MATERIAL_DESC, BASE_UOM, INDUSTRY_SECTOR</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Description</div>
+          <div class="field-desc">Human-readable label shown in the UI.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Data Element<span class="required">*</span></div>
+          <div class="field-desc"><strong>The ABAP DDIC data element</strong> that gives this attribute its data type, length, search help, and domain (value range).<span class="example">Example: MAKTX for material description, INDUSTRY for industry sector</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Key Field Indicator</div>
+          <div class="field-desc"><strong>Checkbox.</strong> Marks this attribute as part of the entity's primary key. Multiple attributes can together form a composite key (especially for Type 2 entities).<span class="example">Example: For MATERIAL_PLANT, both MATERIAL and PLANT are key fields.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Required Entry Indicator</div>
+          <div class="field-desc"><strong>Checkbox.</strong> If ticked, the user MUST enter a value before the CR can be submitted. Drives mandatory-field validation on the UI.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">No Existence Check Flag</div>
+          <div class="field-desc"><strong>Checkbox.</strong> By default, MDG checks that any value entered exists in the linked check table (if the data element points to one). If you tick this, the existence check is suppressed — useful for free-text fields or transient codes.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Search Relevance</div>
+          <div class="field-desc"><strong>Checkbox.</strong> If ticked, this attribute becomes searchable in MDG's search UI. Common search-relevant attributes: material number, description, BP name, country.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon use">U</div>
+        <div>
+          <div class="sub-block-title">Internal concept — Check Tables &amp; Value Tables</div>
+          <h3>How attribute values are validated</h3>
+        </div>
+      </div>
+      <p>An attribute can be linked to a <strong>check table</strong> via its data element's domain. When the user types a value, MDG validates it against the check table — like "this material group must exist in T023."</p>
+      <ul class="bullet">
+        <li><strong>Value Table</strong> — defined at the domain level. Just a recommendation; not enforced.</li>
+        <li><strong>Check Table</strong> — defined at the field/data-element level. Strictly enforced at runtime.</li>
+        <li><strong>"No Existence Check" flag</strong> — bypasses the check table validation if you want free text.</li>
+      </ul>
+      <p>This is why getting the data element right is crucial — the entire validation behavior of an attribute is inherited from it.</p>
+    </div>
+
+    <div class="what-if">
+      <p>If attributes didn't exist, an entity would just be a name with a key — no actual data. If their validation flags (Required, Existence Check) didn't exist, users could enter blank or junk values, polluting master data. The validation flags on the attribute are what turn the data model from a passive shape into an active gatekeeper.</p>
+    </div>
+
+    <div class="analogy">
+      <p>Think of attributes like the <strong>fields on a job application form</strong>. "Full Name" is required (Required flag), "Country" must be picked from a dropdown (check table), "LinkedIn URL" is optional and free-text (No Existence Check). The form designer decides which fields exist, which are mandatory, which validate against a list. MDG's attribute configuration is the form designer's choices, written in SAP customizing.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon link">L</div>
+        <div>
+          <div class="sub-block-title">What it links to</div>
+          <h3>Attribute's neighborhood</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Up</strong>: belongs to one <span class="term">Entity Type</span>.</li>
+        <li><strong>References</strong>: an ABAP <span class="term">Data Element</span> (which in turn points to a domain, which may point to a check table or value table).</li>
+        <li><strong>Becomes</strong>: a column in the generated staging table and in the field-property structure.</li>
+        <li><strong>Influences</strong>: the CR UI screen layout (via Floorplan Manager config).</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ====================================================== -->
+  <!-- ============ SECTION 5: RELATIONSHIPS ================ -->
+  <!-- ====================================================== -->
+  <section id="s5">
+    <div class="section-head">
+      <div class="section-num">05</div>
+      <h2>Relationships &amp; Cardinality</h2>
+    </div>
+    <p class="section-subtitle">How entities connect — who depends on whom, who references whom, who qualifies whom.</p>
+
+    <div class="stage-strip">
+      <div class="stage-pip">Data Model</div>
+      <div class="stage-pip">Header</div>
+      <div class="stage-pip">Entity Type</div>
+      <div class="stage-pip">Attribute</div>
+      <div class="stage-pip active">Relationship</div>
+      <div class="stage-pip">Hierarchy</div>
+      <div class="stage-pip">BOTC</div>
+      <div class="stage-pip">Keys</div>
+      <div class="stage-pip">Authorization</div>
+      <div class="stage-pip">Structures</div>
+      <div class="stage-pip">Mappings</div>
+      <div class="stage-pip">Standard Models</div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What is it</div>
+          <h3>The Relationship</h3>
+        </div>
+      </div>
+      <p>A <span class="term">Relationship</span> is a configured link between two entity types in the same data model. It tells MDG how the entities relate at runtime — which one is the parent, which is the child, how many of one can exist for the other.</p>
+      <p>Relationships are how you build composite master data structures: a material has many plants, each plant has many storage locations; a business partner has one or more addresses, one or more bank accounts.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon why">Y</div>
+        <div>
+          <div class="sub-block-title">Why we need relationships</div>
+          <h3>Why relationships are not "optional"</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Data integrity</strong> — MDG can prevent orphaned records (e.g., a plant entry without a parent material).</li>
+        <li><strong>UI navigation</strong> — the relationship structure drives how the user navigates tabs and sub-screens in a CR ("Open material → click plants tab → see linked plants").</li>
+        <li><strong>Cascading actions</strong> — when a parent is deleted, dependent children behave according to the relationship type.</li>
+        <li><strong>Generated structures</strong> — relationships drive how the staging tables are linked (foreign-key columns).</li>
+      </ul>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">The Relationship Type — Leading / Qualifying / Referencing</div>
+          <h3>The three relationship types</h3>
+        </div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-head">Relationship types explained</div>
+        <div class="field-row">
+          <div class="field-name">Leading</div>
+          <div class="field-desc"><strong>Strong "owning" relationship.</strong> The "to" entity exists only because of the "from" entity. Deleting the parent deletes the children.<span class="example">Example: MATERIAL → MATERIAL_PLANT. If MATERIAL is deleted, the linked PLANT data is meaningless.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Qualifying</div>
+          <div class="field-desc"><strong>The "to" entity's key is composed of the "from" entity's key.</strong> The child cannot be uniquely identified without the parent.<span class="example">Example: MATERIAL + PLANT together identify a MATERIAL_PLANT record — PLANT alone is ambiguous.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Referencing</div>
+          <div class="field-desc"><strong>Weak link — pointer only</strong>. The "from" entity points to a "to" entity which lives independently. Used for lookup-style links.<span class="example">Example: BP_HEADER → INDUSTRY_SECTOR. The industry sector exists on its own; the BP just references it.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Relationship — full field reference</div>
+          <h3>Fields you fill when creating a relationship</h3>
+        </div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-head">Relationship fields</div>
+        <div class="field-row">
+          <div class="field-name">Relationship Name<span class="required">*</span></div>
+          <div class="field-desc">Unique name identifying this relationship.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">From Entity Type<span class="required">*</span></div>
+          <div class="field-desc">The "parent" or "source" entity in this relationship.<span class="example">Example: MATERIAL</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">To Entity Type<span class="required">*</span></div>
+          <div class="field-desc">The "child" or "target" entity.<span class="example">Example: MATERIAL_PLANT</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Relationship Type<span class="required">*</span></div>
+          <div class="field-desc"><strong>Leading / Qualifying / Referencing</strong> as explained above.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Cardinality<span class="required">*</span></div>
+          <div class="field-desc"><strong>How many of "to" per "from."</strong> Standard SAP notation:<br>· <code>1:1</code> — exactly one<br>· <code>1:N</code> — many<br>· <code>1:CN</code> — zero or many (optional)<br>· <code>1:C</code> — zero or one<span class="example">Example: MATERIAL → MATERIAL_PLANT is 1:CN (a material may have zero or many plants)</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="what-if">
+      <p>If relationships didn't exist, entities would be isolated islands. You could create a MATERIAL_PLANT record pointing to nothing. The UI couldn't navigate from material to its plants because the link wouldn't be defined. Generated structures would have no foreign keys. Relationships are the connective tissue of the data model.</p>
+    </div>
+
+    <div class="analogy">
+      <p>Think of a <strong>family tree</strong>. A parent-child link is <strong>Leading</strong> (the child wouldn't exist without the parent). The relationship between siblings sharing a parent is <strong>Qualifying</strong> (you need to know "child of which parent" to uniquely identify them). A person's reference to their <strong>country of citizenship</strong> is <strong>Referencing</strong> — the country exists independently, the person just points to it. Cardinality is "how many" — one country per person (1:1), many children per parent (1:N).</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon link">L</div>
+        <div>
+          <div class="sub-block-title">What it links to</div>
+          <h3>Relationship's neighborhood</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Connects</strong>: two <span class="term">Entity Types</span> within the same Data Model.</li>
+        <li><strong>Drives</strong>: foreign-key columns in generated tables, UI tab/subscreen navigation, cascading delete behavior.</li>
+        <li><strong>Influenced by</strong>: the SU Types of the two entities (Type 2 entities almost always have a Qualifying relationship to their parent Type 1).</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ====================================================== -->
+  <!-- ============ SECTION 6: HIERARCHIES ================== -->
+  <!-- ====================================================== -->
+  <section id="s6">
+    <div class="section-head">
+      <div class="section-num">06</div>
+      <h2>Hierarchies</h2>
+    </div>
+    <p class="section-subtitle">Tree structures of master data — cost centers under a region, accounts under a chart of accounts.</p>
+
+    <div class="stage-strip">
+      <div class="stage-pip">Data Model</div>
+      <div class="stage-pip">Header</div>
+      <div class="stage-pip">Entity Type</div>
+      <div class="stage-pip">Attribute</div>
+      <div class="stage-pip">Relationship</div>
+      <div class="stage-pip active">Hierarchy</div>
+      <div class="stage-pip">BOTC</div>
+      <div class="stage-pip">Keys</div>
+      <div class="stage-pip">Authorization</div>
+      <div class="stage-pip">Structures</div>
+      <div class="stage-pip">Mappings</div>
+      <div class="stage-pip">Standard Models</div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What is it</div>
+          <h3>The Hierarchy</h3>
+        </div>
+      </div>
+      <p>A <span class="term">Hierarchy</span> in MDG is a tree-shaped organization of an entity type's records — like a cost center hierarchy where "Asia" has child "India" which has child "Mumbai branch." It is a special kind of relationship: a parent-child link where any node of the entity can have children of the same entity type.</p>
+      <p>Hierarchies are most heavily used in <strong>MDG-F</strong> (Financials) for cost centers, profit centers, account hierarchies, and consolidation structures.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon why">Y</div>
+        <div>
+          <div class="sub-block-title">Why hierarchies are first-class citizens</div>
+          <h3>Why MDG treats hierarchies specially</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Reporting</strong> — financial reports aggregate at hierarchy levels. The hierarchy <em>is</em> the report structure.</li>
+        <li><strong>Authorization</strong> — you can grant rights at hierarchy nodes ("approve everything under Asia").</li>
+        <li><strong>Versioning</strong> — hierarchies change over fiscal periods. MDG supports edition-dependent hierarchies for clean fiscal-year cutovers.</li>
+        <li><strong>Display</strong> — MDG ships special UI widgets for tree views that only work if the entity is configured as hierarchical.</li>
+      </ul>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Configuration</div>
+          <h3>How a hierarchy is enabled</h3>
+        </div>
+      </div>
+      <p>A hierarchy is enabled at two levels: a flag on the entity type, and an optional configuration of "edition-dependent" behavior.</p>
+      <div class="field-table">
+        <div class="field-table-head">Hierarchy-related fields</div>
+        <div class="field-row">
+          <div class="field-name">Hierarchy Capability (on Entity Type)<span class="required">*</span></div>
+          <div class="field-desc"><strong>Flag on the entity type</strong>. Tells MDG this entity is hierarchical — generates the parent-child storage tables, exposes hierarchy navigation in the UI.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Hierarchy Type</div>
+          <div class="field-desc"><strong>The kind of hierarchy</strong>:<br>· <strong>Simple</strong> — one parent per node, no versioning.<br>· <strong>Version-dependent / Edition-dependent</strong> — different parent depending on the time period or edition.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Edition-Dependent Hierarchy</div>
+          <div class="field-desc"><strong>Checkbox.</strong> If ticked, the hierarchy structure is bound to an Edition (release-bundle). Different editions can have different hierarchy snapshots — essential for "this is our cost-center tree for FY2026 Q1, this is the new one for Q2."</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Hierarchy Class / Type Code</div>
+          <div class="field-desc"><strong>Optional</strong> — links to standard SAP hierarchy types (CO, FI) when reusing ERP hierarchy structures.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="what-if">
+      <p>If hierarchies weren't a built-in concept, you'd have to fake them by making each entity self-reference itself with a normal relationship — possible, but you'd lose tree-UI widgets, versioning, edition support, and hierarchy-based authorization. MDG's first-class hierarchy support is what makes Finance master data manageable.</p>
+    </div>
+
+    <div class="analogy">
+      <p>A hierarchy is like the <strong>org chart of a company</strong>. The CEO sits on top, VPs underneath, managers under each VP, individual contributors at the bottom. Two important features:</p>
+      <ol class="numbered">
+        <li>The chart can be re-organized — last quarter's chart is different from this quarter's. That's <strong>edition-dependence</strong>.</li>
+        <li>Authorization works "everyone in Engineering can approve" — you don't list each engineer, you point to the Engineering node. That's <strong>node-based authorization</strong>.</li>
+      </ol>
+      <p>MDG's hierarchy mechanics power exactly these scenarios for cost centers, profit centers, and accounts.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon link">L</div>
+        <div>
+          <div class="sub-block-title">What it links to</div>
+          <h3>Hierarchy's neighborhood</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Belongs to</strong>: one <span class="term">Entity Type</span>.</li>
+        <li><strong>Often paired with</strong>: <span class="term">Edition</span> (for version-controlled hierarchies in MDG-F).</li>
+        <li><strong>Heavy in</strong>: <span class="term">MDG-F (Financials)</span> data model (0G).</li>
+        <li><strong>Drives</strong>: tree-view UI components, hierarchy-based authorization, hierarchy reporting nodes.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ====================================================== -->
+  <!-- ============ SECTION 7: BOTC ========================= -->
+  <!-- ====================================================== -->
+  <section id="s7">
+    <div class="section-head">
+      <div class="section-num">07</div>
+      <h2>Business Object Type Codes (BOTC)</h2>
+    </div>
+    <p class="section-subtitle">The standardized identifier that says "this entity represents <em>this</em> kind of business object in SAP."</p>
+
+    <div class="stage-strip">
+      <div class="stage-pip">Data Model</div>
+      <div class="stage-pip">Header</div>
+      <div class="stage-pip">Entity Type</div>
+      <div class="stage-pip">Attribute</div>
+      <div class="stage-pip">Relationship</div>
+      <div class="stage-pip">Hierarchy</div>
+      <div class="stage-pip active">BOTC</div>
+      <div class="stage-pip">Keys</div>
+      <div class="stage-pip">Authorization</div>
+      <div class="stage-pip">Structures</div>
+      <div class="stage-pip">Mappings</div>
+      <div class="stage-pip">Standard Models</div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What is it</div>
+          <h3>The Business Object Type Code</h3>
+        </div>
+      </div>
+      <p>A <span class="term">Business Object Type Code (BOTC)</span> is a numeric or short-string code that SAP uses across all its products to identify a specific kind of master data object — material is 194, business partner is 147, supplier is 266, customer is KNA1 in older systems and BUS1006 in newer ones.</p>
+      <p>The BOTC is how SAP's various engines (BRF+, workflow, Business Activity, Application Log, change documents) all agree on "this record is a material," even though their internal representations differ.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon why">Y</div>
+        <div>
+          <div class="sub-block-title">Why BOTC matters</div>
+          <h3>Why every Type 1 entity needs a BOTC</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Cross-system identification</strong> — when MDG sends a CR's data downstream to ERP, the BOTC tells the receiver "this is a material" so the right BAPIs are called.</li>
+        <li><strong>Workflow integration</strong> — Business Activities (in Process Modeling) bind a logical action to a BOTC. CR Type MAT01 ultimately references BOTC 194.</li>
+        <li><strong>Audit and replication</strong> — DRF (Data Replication Framework) uses the BOTC to know which receivers care about which kinds of records.</li>
+        <li><strong>Authorization</strong> — auth objects often include the BOTC in their checks.</li>
+      </ul>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Standard BOTCs you must know</div>
+          <h3>Common SAP BOTCs in MDG</h3>
+        </div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-head">Standard BOTCs by object</div>
+        <div class="field-row">
+          <div class="field-name">194 — Material</div>
+          <div class="field-desc">MM data model · entity MATERIAL.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">147 — Business Partner</div>
+          <div class="field-desc">BP data model · entity BP_HEADER.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">266 — Supplier (Vendor)</div>
+          <div class="field-desc">BP data model · used when BP plays the supplier role.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">MAT — Material (alphanumeric variant)</div>
+          <div class="field-desc">Used in some interfaces alongside 194.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">BUS1006 — Business Partner (newer code)</div>
+          <div class="field-desc">Used in SOA / web service contexts.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Fields you fill</div>
+          <h3>Defining a Business Object Type Code</h3>
+        </div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-head">BOTC fields</div>
+        <div class="field-row">
+          <div class="field-name">Business Object Type Code<span class="required">*</span></div>
+          <div class="field-desc"><strong>Unique numeric/alphanumeric code</strong>. For SAP standard, use the delivered codes (194, 147, 266). For custom data models, use customer-namespace codes (9000+).</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Description</div>
+          <div class="field-desc">Human-readable label.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Business Object Type Reference</div>
+          <div class="field-desc"><strong>Pointer to the BOR (Business Object Repository) type</strong> or the SOA-style BO type. Used when MDG needs to invoke ERP BAPIs or services for this object.<span class="example">Example: BUS1001006 for material, BUS1006 for business partner.</span></div>
+        </div>
+      </div>
+      <div class="path">
+        <span class="terminal">SPRO</span><span class="arrow">→</span>MDG<span class="arrow">→</span>General Settings<span class="arrow">→</span>Data Modeling<span class="arrow">→</span><span class="terminal">Define Business Object Type Codes</span>
+      </div>
+    </div>
+
+    <div class="what-if">
+      <p>If BOTCs didn't exist, MDG couldn't communicate cleanly with the rest of SAP. Every interface (DRF, BRF+, workflow, change documents) would have to invent its own way to say "this is a material." With BOTC, there is ONE code, used everywhere.</p>
+    </div>
+
+    <div class="analogy">
+      <p>Think of BOTC like an <strong>ISBN for books</strong>. Every book has an ISBN — bookshops, libraries, publishers, customs offices all use the same code to refer to that book. They don't argue "I call it XYZ-2023." The ISBN is the universal ID. BOTC plays this role for SAP master data objects.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon link">L</div>
+        <div>
+          <div class="sub-block-title">What it links to</div>
+          <h3>BOTC's neighborhood</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Referenced by</strong>: Type 1 <span class="term">Entity Types</span> via the "Business Object Type Assignment" field.</li>
+        <li><strong>Used in</strong>: <span class="term">Business Activities</span> (Process Modeling) — they bind a logical action to a BOTC.</li>
+        <li><strong>Communicated to</strong>: ERP, DRF receivers, BRF+ rule sets.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ====================================================== -->
+  <!-- ============ SECTION 8: ENTITY ↔ BOTC ================ -->
+  <!-- ====================================================== -->
+  <section id="s8">
+    <div class="section-head">
+      <div class="section-num">08</div>
+      <h2>Entity Type ↔ BOTC Assignment</h2>
+    </div>
+    <p class="section-subtitle">The wiring that says "this entity in my data model represents <em>this</em> kind of business object."</p>
+
+    <div class="stage-strip">
+      <div class="stage-pip">Data Model</div>
+      <div class="stage-pip">Header</div>
+      <div class="stage-pip">Entity Type</div>
+      <div class="stage-pip">Attribute</div>
+      <div class="stage-pip">Relationship</div>
+      <div class="stage-pip">Hierarchy</div>
+      <div class="stage-pip">BOTC</div>
+      <div class="stage-pip active">Entity ↔ BOTC</div>
+      <div class="stage-pip">Keys</div>
+      <div class="stage-pip">Authorization</div>
+      <div class="stage-pip">Structures</div>
+      <div class="stage-pip">Mappings</div>
+      <div class="stage-pip">Standard Models</div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What is it</div>
+          <h3>Entity ↔ BOTC Assignment</h3>
+        </div>
+      </div>
+      <p>This is a small but critical customizing step: <strong>tell MDG which entity type in your data model represents which BOTC's primary record</strong>. For the MM model, MATERIAL is the primary entity for BOTC 194. For BP, BP_HEADER is the primary for 147.</p>
+      <p>This assignment is what lets MDG say at runtime: "when a CR of business activity MAT1 fires, find the primary entity for BOTC 194 in data model MM, that's MATERIAL — go to its staging table."</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon why">Y</div>
+        <div>
+          <div class="sub-block-title">Why this small step matters</div>
+          <h3>Why every data model needs this binding</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Bridges naming worlds</strong> — your data model uses entity names (MATERIAL); SAP infrastructure uses BOTCs (194). This step is the dictionary between the two.</li>
+        <li><strong>Enables Business Activities to work</strong> — a Business Activity references a BOTC; without the binding to the entity, the activity doesn't know which staging table to write to.</li>
+        <li><strong>Drives single-object processing</strong> — the "main entity" for a CR Type is resolved through this mapping.</li>
+      </ul>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Fields you fill</div>
+          <h3>Entity ↔ BOTC — field reference</h3>
+        </div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-head">Entity ↔ BOTC fields</div>
+        <div class="field-row">
+          <div class="field-name">Data Model<span class="required">*</span></div>
+          <div class="field-desc">Which data model this binding applies to.<span class="example">Example: MM, BP, 0G</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">BOTC<span class="required">*</span></div>
+          <div class="field-desc">The Business Object Type Code being mapped.<span class="example">Example: 194 for material</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Primary Entity Type Assignment<span class="required">*</span></div>
+          <div class="field-desc"><strong>The Type 1 entity</strong> in this data model that represents the BOTC.<span class="example">Example: MATERIAL for (MM, 194); BP_HEADER for (BP, 147)</span></div>
+        </div>
+      </div>
+      <div class="path">
+        <span class="terminal">SPRO</span><span class="arrow">→</span>MDG<span class="arrow">→</span>General Settings<span class="arrow">→</span>Data Modeling<span class="arrow">→</span><span class="terminal">Define Entity Type to Be Used by Business Object Type</span>
+      </div>
+    </div>
+
+    <div class="what-if">
+      <p>If this binding wasn't set, MDG would know the entity name and the BOTC but not that they refer to the same thing. Business Activities (configured against BOTC) would fail to find an entity to operate on. Every standard MDG content ships this binding pre-configured — but for custom data models, you must set it manually.</p>
+    </div>
+
+    <div class="analogy">
+      <p>Think of <strong>passport numbers and Aadhaar numbers</strong>. They are different IDs for the same person. A registry has to maintain a mapping — "passport ABC123 = Aadhaar 1234-5678-9012." Without this mapping, the immigration officer (Business Activity) and the welfare office (data model) can't agree on who they're talking about. Entity ↔ BOTC is exactly this kind of crosswalk.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon link">L</div>
+        <div>
+          <div class="sub-block-title">What it links to</div>
+          <h3>Assignment's neighborhood</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Bridges</strong>: an <span class="term">Entity Type</span> in a Data Model and a <span class="term">BOTC</span>.</li>
+        <li><strong>Used by</strong>: <span class="term">Business Activities</span> in Process Modeling.</li>
+        <li><strong>Resolved at runtime</strong>: when a CR fires, MDG looks here to find which staging table to operate on.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ====================================================== -->
+  <!-- ============ SECTION 9: KEY PREFIXES ================= -->
+  <!-- ====================================================== -->
+  <section id="s9">
+    <div class="section-head">
+      <div class="section-num">09</div>
+      <h2>Internal Key Prefixes &amp; Temporary Keys</h2>
+    </div>
+    <p class="section-subtitle">How MDG handles keys for records that don't exist yet — the temporary-ID problem.</p>
+
+    <div class="stage-strip">
+      <div class="stage-pip">Data Model</div>
+      <div class="stage-pip">Header</div>
+      <div class="stage-pip">Entity Type</div>
+      <div class="stage-pip">Attribute</div>
+      <div class="stage-pip">Relationship</div>
+      <div class="stage-pip">Hierarchy</div>
+      <div class="stage-pip">BOTC</div>
+      <div class="stage-pip">Entity ↔ BOTC</div>
+      <div class="stage-pip active">Keys</div>
+      <div class="stage-pip">Authorization</div>
+      <div class="stage-pip">Structures</div>
+      <div class="stage-pip">Mappings</div>
+      <div class="stage-pip">Standard Models</div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What is it</div>
+          <h3>The Temporary Key Concept</h3>
+        </div>
+      </div>
+      <p>When a user creates a CR for a record with <strong>Internal Key Assignment</strong> (system-generated key), there is a problem: the real key shouldn't be issued until the CR is approved (so we don't waste ID numbers on rejected CRs). But the user needs <em>some</em> identifier on screen — they can't fill the form for "the next material" if there's no field to show what they're creating.</p>
+      <p>The solution: a <span class="term">Temporary Key</span>. While the CR is in flight, MDG assigns a temporary ID prefixed with <code>$</code> (default). When the CR is activated, the temporary key is replaced with the real one drawn from the number range.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon why">Y</div>
+        <div>
+          <div class="sub-block-title">Why temporary keys exist</div>
+          <h3>Why we can't just issue real keys upfront</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Reject-safe</strong> — if the CR is rejected, no real material number is wasted.</li>
+        <li><strong>Multiple draft CRs</strong> — users can have several drafts open simultaneously, each needing a unique identifier without conflicting.</li>
+        <li><strong>Predictable behavior in mass processing</strong> — when 50 materials are being created in one CR, each gets a distinct temporary key inside MDG; real keys are assigned at activation.</li>
+        <li><strong>Audit clarity</strong> — temporary keys are visibly distinguishable (the <code>$</code> prefix) so it's clear in logs which records are still in flight.</li>
+      </ul>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Fields you fill</div>
+          <h3>Configuring temporary key prefixes</h3>
+        </div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-head">Temporary key prefix configuration</div>
+        <div class="field-row">
+          <div class="field-name">Data Model<span class="required">*</span></div>
+          <div class="field-desc">Which data model this prefix applies to.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Entity Type<span class="required">*</span></div>
+          <div class="field-desc">Which entity in that data model gets a temporary key.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Temporary Key Prefix</div>
+          <div class="field-desc"><strong>Default: <code>$</code></strong>. You can override per entity (e.g., <code>$M</code> for material temp keys to make them visually distinct from BP temp keys).<span class="example">Example: $0000123, $00ACME01</span></div>
+        </div>
+      </div>
+      <p style="margin-top:14px;">The configuration is stored in customizing table <code>USMD0016</code>.</p>
+      <div class="path">
+        <span class="terminal">SPRO</span><span class="arrow">→</span>MDG<span class="arrow">→</span>General Settings<span class="arrow">→</span>Data Modeling<span class="arrow">→</span><span class="terminal">Define Prefixes for Internal Key Assignment</span>
+      </div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon use">U</div>
+        <div>
+          <div class="sub-block-title">Internal concept — Number Range Objects</div>
+          <h3>The link to SNRO number ranges</h3>
+        </div>
+      </div>
+      <p>The <em>real</em> key (assigned at activation) comes from a <strong>Number Range Object</strong> defined in transaction <code>SNRO</code>. The data model's entity-type configuration includes the Number Range Object name. At activation, MDG calls the number range and replaces the temporary key.</p>
+      <ul class="bullet">
+        <li>For <strong>Material (MM)</strong> — real number ranges are defined in standard SAP, attached via account groups.</li>
+        <li>For <strong>BP</strong> — number ranges per BP grouping; the data model points to <code>BU_PARTNER</code>'s number range setup.</li>
+        <li>For custom models — you create a Z number range object in SNRO and assign it to your entity type.</li>
+      </ul>
+    </div>
+
+    <div class="what-if">
+      <p>If temporary keys didn't exist, users would have to type a "guess" key for every create CR (which defeats the purpose of internal assignment), or MDG would issue real keys that get wasted on rejection. Either option breaks the audit trail and the number-range hygiene. The temporary key concept is what makes "create with internal key" workable inside a workflow-driven world.</p>
+    </div>
+
+    <div class="analogy">
+      <p>Think of a <strong>hospital admitting a new patient</strong> who hasn't received their hospital ID yet. The nurse writes "Pt-A" on the wristband (temporary key) and starts filling in forms. When the patient is officially admitted (CR activated), they get a real hospital ID like "HPT-2026-0457" (real key from number range). The temporary ID is short-lived; the real one stays forever in the medical record.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon link">L</div>
+        <div>
+          <div class="sub-block-title">What it links to</div>
+          <h3>Temporary Key's neighborhood</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Triggered by</strong>: <span class="term">Internal Key Assignment</span> on the entity type.</li>
+        <li><strong>Replaced by</strong>: a real key drawn from the <span class="term">Number Range Object</span> at activation.</li>
+        <li><strong>Configured in</strong>: customizing table <code>USMD0016</code>.</li>
+        <li><strong>Visible to user</strong>: yes — they see the $-prefixed key during CR processing.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ====================================================== -->
+  <!-- ============ SECTION 10: AUTHORIZATION =============== -->
+  <!-- ====================================================== -->
+  <section id="s10">
+    <div class="section-head">
+      <div class="section-num">10</div>
+      <h2>Authorization Relevance per Entity Type</h2>
+    </div>
+    <p class="section-subtitle">Who can see, change, and approve what — anchored to the data model.</p>
+
+    <div class="stage-strip">
+      <div class="stage-pip">Data Model</div>
+      <div class="stage-pip">Header</div>
+      <div class="stage-pip">Entity Type</div>
+      <div class="stage-pip">Attribute</div>
+      <div class="stage-pip">Relationship</div>
+      <div class="stage-pip">Hierarchy</div>
+      <div class="stage-pip">BOTC</div>
+      <div class="stage-pip">Entity ↔ BOTC</div>
+      <div class="stage-pip">Keys</div>
+      <div class="stage-pip active">Authorization</div>
+      <div class="stage-pip">Structures</div>
+      <div class="stage-pip">Mappings</div>
+      <div class="stage-pip">Standard Models</div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What is it</div>
+          <h3>Authorization Relevance</h3>
+        </div>
+      </div>
+      <p><span class="term">Authorization Relevance</span> is the data-model-level setting that tells MDG "for this entity (or specific attribute), check the user's authorizations before allowing the action." Without this flag, MDG skips the auth check on that entity, effectively letting any logged-in user touch the data.</p>
+      <p>Once an entity is marked authorization-relevant, MDG uses three standard authorization objects to enforce access at runtime: <code>R_USMD_MOD</code>, <code>R_USMD_VAL</code>, and <code>R_USMD_CRQ</code>.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon why">Y</div>
+        <div>
+          <div class="sub-block-title">Why we mark entities authorization-relevant</div>
+          <h3>Why authorization is data-driven, not just role-driven</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Granular control</strong> — you can permit a user to change MATERIAL but not COSTING. The flag is per-entity (and per-attribute if needed).</li>
+        <li><strong>Compliance</strong> — sensitive data (bank details, salary fields) can be locked to specific roles even within the same entity.</li>
+        <li><strong>Approver scoping</strong> — only users authorized for the entity can see the CR's content for approval.</li>
+        <li><strong>Decouples role design from data-model design</strong> — the data model marks WHAT is sensitive; the role marks WHO can do what to it.</li>
+      </ul>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">The three MDG authorization objects</div>
+          <h3>R_USMD_MOD · R_USMD_VAL · R_USMD_CRQ</h3>
+        </div>
+      </div>
+      <p>These are the standard SAP-delivered auth objects that govern MDG access. Each protects a different layer of the system.</p>
+      <div class="field-table">
+        <div class="field-table-head">MDG authorization objects</div>
+        <div class="field-row">
+          <div class="field-name">R_USMD_MOD<br><span class="badge">Model-level</span></div>
+          <div class="field-desc"><strong>Authorization to access a data model and its entities at the modeling/configuration level.</strong> Controls who can open <code>USMD_MODEL</code>, edit entity types, change structures.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">R_USMD_VAL<br><span class="badge">Data-level</span></div>
+          <div class="field-desc"><strong>Authorization for the actual data values</strong> of an entity. Controls who can view/edit records of a marked entity type. The "do I have rights to this material?" question.<span class="example">Example: granting a user MM/MATERIAL/CHANGE rights via R_USMD_VAL.</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">R_USMD_CRQ<br><span class="badge">CR-level</span></div>
+          <div class="field-desc"><strong>Authorization for Change Requests</strong>. Controls who can create / view / approve / withdraw a CR of a given type. The "do I have rights to act on this CR?" question.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Configuration fields</div>
+          <h3>Authorization-relevance fields</h3>
+        </div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-head">Authorization-relevance fields on entity types</div>
+        <div class="field-row">
+          <div class="field-name">Authorization-Relevant Entity (flag)</div>
+          <div class="field-desc">Checkbox on the entity type. Switches on R_USMD_VAL checks for this entity.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Authorization-Relevant Attribute</div>
+          <div class="field-desc">Optional, attribute-level checkbox. Allows even finer control — e.g., the entity is broadly accessible but specific sensitive attributes need separate auth.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Authorization Object Linkage</div>
+          <div class="field-desc">Maps the entity to one or more of the three standard auth objects (or a custom Z object).</div>
+        </div>
+      </div>
+      <div class="path">
+        <span class="terminal">SPRO</span><span class="arrow">→</span>MDG<span class="arrow">→</span>General Settings<span class="arrow">→</span>Data Modeling<span class="arrow">→</span><span class="terminal">Define Authorization Relevance per Entity Type</span>
+      </div>
+    </div>
+
+    <div class="what-if">
+      <p>If authorization weren't anchored at the data-model level, you'd have to hand-roll access checks for every entity, every screen, every workflow step. The standard SAP auth objects (R_USMD_*) give you a consistent, audit-friendly way to do this. Without the flag on the entity, those objects do nothing.</p>
+    </div>
+
+    <div class="analogy">
+      <p>Think of <strong>different security zones inside an office building</strong>. The lobby is open (entities not marked auth-relevant). The accounts department needs a swipe card (R_USMD_VAL on financial entities). The server room needs biometric access (sensitive attributes flagged). The CFO's office requires both swipe and biometric (multiple auth objects combined). The data model is the building's floor plan — each room (entity) carries a flag saying "this area is restricted."</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon link">L</div>
+        <div>
+          <div class="sub-block-title">What it links to</div>
+          <h3>Authorization's neighborhood</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Set on</strong>: <span class="term">Entity Type</span> (and optionally on attributes).</li>
+        <li><strong>Enforced via</strong>: <span class="term">R_USMD_MOD</span>, <span class="term">R_USMD_VAL</span>, <span class="term">R_USMD_CRQ</span> auth objects.</li>
+        <li><strong>Checked during</strong>: every CR open, save, approve, reject — and during direct entity-data access.</li>
+        <li><strong>Configured via</strong>: standard SAP role/profile maintenance (PFCG) at the user/role level.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ====================================================== -->
+  <!-- ============ SECTION 11: GENERATE STRUCTURES ========= -->
+  <!-- ====================================================== -->
+  <section id="s11">
+    <div class="section-head">
+      <div class="section-num">11</div>
+      <h2>Generate Data Model-Specific Structures</h2>
+    </div>
+    <p class="section-subtitle">Turning the data model from blueprint into actual ABAP tables and structures.</p>
+
+    <div class="stage-strip">
+      <div class="stage-pip">Data Model</div>
+      <div class="stage-pip">Header</div>
+      <div class="stage-pip">Entity Type</div>
+      <div class="stage-pip">Attribute</div>
+      <div class="stage-pip">Relationship</div>
+      <div class="stage-pip">Hierarchy</div>
+      <div class="stage-pip">BOTC</div>
+      <div class="stage-pip">Entity ↔ BOTC</div>
+      <div class="stage-pip">Keys</div>
+      <div class="stage-pip">Authorization</div>
+      <div class="stage-pip active">Structures</div>
+      <div class="stage-pip">Mappings</div>
+      <div class="stage-pip">Standard Models</div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What is it</div>
+          <h3>Structure Generation</h3>
+        </div>
+      </div>
+      <p>Once your data model is defined (entities, attributes, relationships, hierarchies), it is still just metadata. To make it operational, MDG needs to <strong>generate ABAP Data Dictionary structures</strong> — actual technical objects that hold runtime data, drive the UI, support search, and feed external interfaces.</p>
+      <p>This step is called <span class="term">Generate Data Model-Specific Structures</span>. It is mandatory before activation. Without it, no CR can save data, no UI can render, no search can run.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon why">Y</div>
+        <div>
+          <div class="sub-block-title">Why we generate, not hand-write</div>
+          <h3>Why structures are generated automatically</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Consistency</strong> — every entity gets the same shape of staging table, mapping structure, field-property structure. Hand-writing would introduce inconsistencies.</li>
+        <li><strong>Regeneration on change</strong> — when you add an attribute, re-running structure generation updates all dependent structures in seconds. Manual changes would break.</li>
+        <li><strong>Predictable names</strong> — generated objects follow naming conventions, so other tools (BAdIs, BRF+, UI configs) can find them programmatically.</li>
+        <li><strong>Transport ready</strong> — generated objects land in the right package and follow the right transport rules.</li>
+      </ul>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">What gets generated</div>
+          <h3>Mandatory vs Optional structures</h3>
+        </div>
+      </div>
+      <p>Generation produces two categories of structures:</p>
+      <div class="field-table">
+        <div class="field-table-head">Mandatory generated structures</div>
+        <div class="field-row">
+          <div class="field-name">Mapping Structure</div>
+          <div class="field-desc"><strong>Maps each entity to its staging table</strong>. Used at runtime to route reads/writes correctly.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Field Property Structure</div>
+          <div class="field-desc"><strong>Carries field-level metadata</strong> — required, read-only, hidden, default value. Used by the UI and by validation engines.</div>
+        </div>
+      </div>
+      <div class="field-table" style="margin-top: 20px;">
+        <div class="field-table-head">Optional generated structures</div>
+        <div class="field-row">
+          <div class="field-name">Search Structure</div>
+          <div class="field-desc">Enables enterprise search over master data. Generated if search-relevant attributes exist.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">PDF Forms Structure</div>
+          <div class="field-desc">Used when the CR needs to be printable. Smartforms / Adobe Forms bind to this structure.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Field Control Structure</div>
+          <div class="field-desc">Controls dynamic UI behavior — show/hide fields based on context.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">DRF Structure</div>
+          <div class="field-desc">Data Replication Framework integration — outbound interface to downstream systems.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon use">U</div>
+        <div>
+          <div class="sub-block-title">Verification — how to check what was generated</div>
+          <h3>SE11 · MDG_DATA_MODEL · USMD_ADJUST_STAGING</h3>
+        </div>
+      </div>
+      <p>After generation, you verify the output using three tools:</p>
+      <ul class="bullet">
+        <li><strong><code>SE11</code></strong> — open the ABAP Data Dictionary, search for generated structures using your data model's namespace prefix. Confirms structures physically exist.</li>
+        <li><strong><code>MDG_DATA_MODEL</code></strong> — alternative display of the model, including the list of generated objects per entity.</li>
+        <li><strong><code>USMD_ADJUST_STAGING</code></strong> — adjusts/synchronizes the staging area tables when you've made model changes. Run this after every model modification.</li>
+      </ul>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Configuration access</div>
+          <h3>How to run generation</h3>
+        </div>
+      </div>
+      <div class="path">
+        <span class="terminal">SPRO</span><span class="arrow">→</span>MDG<span class="arrow">→</span>General Settings<span class="arrow">→</span>Data Modeling<span class="arrow">→</span><span class="terminal">Generate Data Model-Specific Structures</span>
+      </div>
+      <p>Or directly from inside <code>USMD_MODEL</code>: select the data model and choose <em>Activate</em> — generation runs as part of activation.</p>
+    </div>
+
+    <div class="what-if">
+      <p>If structures weren't generated, the data model would exist only as metadata in tables like <code>USMD_DATA_MODEL</code> — nothing the runtime can read or write to. CR submission would fail because there is no staging table to receive the data. The UI would render no fields because the field-property structure is empty. Activation without generation is impossible.</p>
+    </div>
+
+    <div class="analogy">
+      <p>Think of an architect's <strong>3D model of a building vs the actual constructed building</strong>. The 3D model (data model definition) is a beautiful, accurate representation — but you can't live in it. Structure generation is the construction phase: workers (the generator) read the 3D model and pour concrete, lay bricks, run pipes (generate tables, structures, indexes). Only after construction can people move in (data can flow).</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon link">L</div>
+        <div>
+          <div class="sub-block-title">What it links to</div>
+          <h3>Generation's neighborhood</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Input</strong>: the data model (entity types, attributes, relationships).</li>
+        <li><strong>Output</strong>: ABAP DDIC structures and tables in the assigned <span class="term">Package</span>.</li>
+        <li><strong>Prerequisite for</strong>: data model activation, CR processing, SMT mapping.</li>
+        <li><strong>Re-run after</strong>: any data model change (new entity, new attribute, changed relationship).</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ====================================================== -->
+  <!-- ============ SECTION 12: ACTIVE vs STAGING =========== -->
+  <!-- ====================================================== -->
+  <section id="s12">
+    <div class="section-head">
+      <div class="section-num">12</div>
+      <h2>Active Area vs Staging Area</h2>
+    </div>
+    <p class="section-subtitle">The two storage zones every MDG record passes through — drafts here, approved data there.</p>
+
+    <div class="stage-strip">
+      <div class="stage-pip">Data Model</div>
+      <div class="stage-pip">Header</div>
+      <div class="stage-pip">Entity Type</div>
+      <div class="stage-pip">Attribute</div>
+      <div class="stage-pip">Relationship</div>
+      <div class="stage-pip">Hierarchy</div>
+      <div class="stage-pip">BOTC</div>
+      <div class="stage-pip">Entity ↔ BOTC</div>
+      <div class="stage-pip">Keys</div>
+      <div class="stage-pip">Authorization</div>
+      <div class="stage-pip">Structures</div>
+      <div class="stage-pip active">Active vs Staging</div>
+      <div class="stage-pip">Mappings</div>
+      <div class="stage-pip">Standard Models</div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What is it</div>
+          <h3>The Two Storage Areas</h3>
+        </div>
+      </div>
+      <p>MDG separates master data into two zones — the <span class="term">Staging Area</span> (where in-flight CR data lives) and the <span class="term">Active Area</span> (where approved, live master data lives). Every record flows from Staging to Active when its CR is activated.</p>
+      <div class="field-table">
+        <div class="field-table-head">Staging vs Active — side by side</div>
+        <div class="field-row">
+          <div class="field-name">Staging Area</div>
+          <div class="field-desc"><strong>The "in-flight" zone.</strong> Holds CR data while it is being drafted, reviewed, approved. Always MDG-owned tables (generated from the data model). Multiple versions of a record can coexist in staging (different CRs proposing different changes).<span class="example">Example: tables like /1MD/MAT_OS01 (MDG-generated material staging)</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Active Area</div>
+          <div class="field-desc"><strong>The "live" zone.</strong> Where approved master data permanently resides. <em>Where</em> it lives depends on the data model's mode:<br>· <strong>Reuse Mode</strong> — Active Area = standard ERP tables (MARA, BUT000, KNA1)<br>· <strong>Flex Mode</strong> — Active Area = MDG-generated active tables (separate from staging)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon why">Y</div>
+        <div>
+          <div class="sub-block-title">Why split staging from active</div>
+          <h3>Why MDG isolates draft data from live data</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Safety</strong> — rejected/withdrawn CRs never pollute live data. The staging area is a sandbox.</li>
+        <li><strong>Concurrency</strong> — multiple CRs can propose conflicting changes to the same active record without trampling each other.</li>
+        <li><strong>Audit</strong> — staging holds the full history of proposed changes, including those that were rejected.</li>
+        <li><strong>Validation room</strong> — staging is where validations run before commit. If a validation fails, the data is contained.</li>
+        <li><strong>Comparison</strong> — MDG can show "before vs after" by comparing staging to active during the approval screen.</li>
+      </ul>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">How a record flows between them</div>
+          <h3>The Staging → Active journey</h3>
+        </div>
+      </div>
+      <ol class="numbered">
+        <li><strong>CR created</strong> — user enters data; MDG writes it to <em>staging</em>.</li>
+        <li><strong>CR in review</strong> — approvers see staging data; active data is untouched.</li>
+        <li><strong>Approval granted</strong> — CR reaches step 90 (final check).</li>
+        <li><strong>Activation</strong> — MDG copies the staging data to the active area. Real keys replace temporary ones. Number ranges are consumed.</li>
+        <li><strong>Staging cleanup</strong> — the staging entries are marked as processed (kept for audit but no longer active).</li>
+      </ol>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon use">U</div>
+        <div>
+          <div class="sub-block-title">Internal concept — Reuse Mode's special behavior</div>
+          <h3>Why Reuse Mode is uniquely powerful</h3>
+        </div>
+      </div>
+      <p>In Reuse Mode, the Active Area <em>is</em> the standard ERP tables. This means:</p>
+      <ul class="bullet">
+        <li><strong>Zero data duplication</strong> — once a material is activated, it lives in MARA, just like materials created via MM01 directly.</li>
+        <li><strong>Existing reports work unchanged</strong> — your customer's reports, transactions, BAPIs continue reading from MARA without knowing MDG exists.</li>
+        <li><strong>Coexistence</strong> — MDG-governed and non-MDG-governed materials sit side by side in MARA.</li>
+        <li><strong>SMT mapping is critical</strong> — because the staging area is MDG-generated and the active area is ERP-standard, you need to map fields between them (Section 13).</li>
+      </ul>
+      <p>In Flex Mode, the active area is a separate MDG-generated set of tables. Mapping is simpler (or unnecessary) because both staging and active share the same schema, but you lose the "everything just works with ERP" advantage.</p>
+    </div>
+
+    <div class="what-if">
+      <p>If MDG didn't separate staging from active, every keystroke in a CR would immediately hit live data. Rejected CRs would have already polluted the database. The very idea of "approval before commit" would be impossible. The staging/active split is the architectural foundation that makes governance possible.</p>
+    </div>
+
+    <div class="analogy">
+      <p>Think of <strong>publishing an article on a blog</strong>. While you write, the post lives in "Drafts" (staging). Multiple drafts can exist. Reviewers can read your draft, comment, ask for revisions. When you click "Publish," the draft is copied to "Live" (active) where the world sees it. Old drafts stay around for revision history, but they no longer affect what's public.</p>
+      <p>MDG works exactly this way. CR submission = draft. Approval workflow = peer review. Activation = publish.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon link">L</div>
+        <div>
+          <div class="sub-block-title">What it links to</div>
+          <h3>Active/Staging's neighborhood</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Configured via</strong>: <span class="term">Active Area</span> field on the data model header.</li>
+        <li><strong>Storage</strong>: <em>Staging</em> always in MDG-owned tables; <em>Active</em> in ERP tables (Reuse) or MDG-owned tables (Flex).</li>
+        <li><strong>Mapped via</strong>: <span class="term">Service Mapping Tool (SMT)</span> — see next section.</li>
+        <li><strong>Triggered at</strong>: CR step 90 (final check &amp; activation).</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ====================================================== -->
+  <!-- ============ SECTION 13: SMT MAPPINGS ================ -->
+  <!-- ====================================================== -->
+  <section id="s13">
+    <div class="section-head">
+      <div class="section-num">13</div>
+      <h2>Service Mapping Tool (SMT) — Mappings</h2>
+    </div>
+    <p class="section-subtitle">The translation layer between MDG staging tables and ERP active tables.</p>
+
+    <div class="stage-strip">
+      <div class="stage-pip">Data Model</div>
+      <div class="stage-pip">Header</div>
+      <div class="stage-pip">Entity Type</div>
+      <div class="stage-pip">Attribute</div>
+      <div class="stage-pip">Relationship</div>
+      <div class="stage-pip">Hierarchy</div>
+      <div class="stage-pip">BOTC</div>
+      <div class="stage-pip">Entity ↔ BOTC</div>
+      <div class="stage-pip">Keys</div>
+      <div class="stage-pip">Authorization</div>
+      <div class="stage-pip">Structures</div>
+      <div class="stage-pip">Active vs Staging</div>
+      <div class="stage-pip active">Mappings</div>
+      <div class="stage-pip">Standard Models</div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What is it</div>
+          <h3>Service Mapping Tool (SMT)</h3>
+        </div>
+      </div>
+      <p>The <span class="term">Service Mapping Tool (SMT)</span> is the configuration framework where you tell MDG: "this field in my staging structure corresponds to <em>that</em> field in the ERP table." It is the dictionary that lets MDG read from and write to ERP tables without code.</p>
+      <p>SMT is used primarily in <strong>Reuse Mode</strong> data models (MM, BP). In pure Flex Mode, no external mapping is needed because the active and staging are both MDG-owned.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon why">Y</div>
+        <div>
+          <div class="sub-block-title">Why SMT exists</div>
+          <h3>Why mapping is not optional in Reuse Mode</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Staging and active have different shapes</strong> — MDG's staging structures (generated) don't necessarily match the field names or layouts of ERP tables (MARA, BUT000).</li>
+        <li><strong>Field name divergence</strong> — MDG might call a field MATERIAL_DESC while MARA calls it MAKTX. SMT translates the names.</li>
+        <li><strong>Activation needs translation</strong> — when a CR activates, MDG writes to the ERP table; the mapping tells it which ERP field to populate from which staging field.</li>
+        <li><strong>Reading existing data</strong> — when a user starts a CR to change an existing material, MDG reads MARA via the mapping to pre-fill the screen.</li>
+        <li><strong>Custom extensions</strong> — when you add a custom Z field to MARA, you map it through SMT to your custom MDG attribute.</li>
+      </ul>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Two flavors of mapping</div>
+          <h3>SMT Mapping to Active Area vs to Staging Area</h3>
+        </div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-head">SMT mapping types</div>
+        <div class="field-row">
+          <div class="field-name">SMT Mapping to Active Area</div>
+          <div class="field-desc"><strong>Used at CR activation.</strong> Source: MDG staging structure. Target: ERP active table. Tells MDG which ERP fields to write to during activation.<span class="example">Example: MDG MATERIAL.MATERIAL_DESC → MARA-MAKTX</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">SMT Mapping to Staging Area</div>
+          <div class="field-desc"><strong>Used at CR creation (for change CRs).</strong> Source: ERP active table. Target: MDG staging structure. Tells MDG how to read the current ERP record and load it into staging for the user to edit.<span class="example">Example: MARA-MTART → MDG MATERIAL.MATERIAL_TYPE</span></div>
+        </div>
+      </div>
+      <p style="margin-top:14px;">Both mappings are needed for a full round-trip: <em>read from active → edit in staging → write to active</em>.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon use">U</div>
+        <div>
+          <div class="sub-block-title">Internal concept — CVI for Business Partner</div>
+          <h3>CVI (Customer-Vendor Integration)</h3>
+        </div>
+      </div>
+      <p>For the BP data model specifically, there is an additional layer called <strong>CVI — Customer-Vendor Integration</strong>. CVI synchronizes BP records with the classic customer (KNA1) and vendor (LFA1) tables.</p>
+      <ul class="bullet">
+        <li>A BP marked as "Customer" role automatically gets a corresponding KNA1 entry created via CVI.</li>
+        <li>A BP marked as "Supplier" role syncs with LFA1.</li>
+        <li>CVI is configured separately but works alongside SMT — SMT handles MDG↔BUT000, CVI handles BUT000↔KNA1/LFA1.</li>
+      </ul>
+      <p>For S/4HANA, BP is the only allowed master for customers and suppliers; KNA1/LFA1 are still maintained by CVI for backwards compatibility.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Configuration</div>
+          <h3>Accessing SMT</h3>
+        </div>
+      </div>
+      <div class="path">
+        <span class="terminal">T-code</span><span class="arrow">→</span><span class="terminal">MDG_BS_SMT</span> · or · <span class="terminal">SPRO</span><span class="arrow">→</span>MDG<span class="arrow">→</span>General Settings<span class="arrow">→</span>Data Modeling<span class="arrow">→</span><span class="terminal">Create and Edit Mappings</span>
+      </div>
+      <p>SMT configurations are <strong>only applicable in Reuse Mode</strong>. In pure Flex Mode, SMT is not used because there is no separate active store to map to.</p>
+    </div>
+
+    <div class="what-if">
+      <p>Without SMT in Reuse Mode, MDG could not write activated CRs back to ERP tables. The active area would always be empty. Every read of existing ERP records (for "change material" CRs) would fail. SMT is the bridge that makes Reuse Mode practical — it lets MDG live alongside ERP without duplicating data.</p>
+    </div>
+
+    <div class="analogy">
+      <p>Think of SMT like a <strong>translator at a UN summit</strong>. The MDG speaker (staging) and the ERP speaker (active) talk different languages. The translator (SMT) listens to one side, converts the meaning, and speaks it to the other. Both sides retain their native vocabulary; only the translator knows the dictionary.</p>
+      <p>Without the translator, the two sides could meet but never exchange information meaningfully. With the translator, they collaborate seamlessly — even though their internal field names and structures differ.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon link">L</div>
+        <div>
+          <div class="sub-block-title">What it links to</div>
+          <h3>SMT's neighborhood</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Connects</strong>: MDG staging structures ↔ ERP active tables.</li>
+        <li><strong>Triggered during</strong>: CR creation (read), CR activation (write).</li>
+        <li><strong>Only used in</strong>: Reuse Mode data models (MM, BP).</li>
+        <li><strong>Complemented by</strong>: <span class="term">CVI</span> for BP (BUT000 ↔ KNA1/LFA1).</li>
+        <li><strong>Customized via</strong>: SMT extension framework (see Section 14).</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ====================================================== -->
+  <!-- ============ SECTION 14: EXTENDING MAPPINGS ========== -->
+  <!-- ====================================================== -->
+  <section id="s14">
+    <div class="section-head">
+      <div class="section-num">14</div>
+      <h2>Extending Mappings</h2>
+    </div>
+    <p class="section-subtitle">Adding your custom fields to standard SAP data models — the most common MDG customization task.</p>
+
+    <div class="stage-strip">
+      <div class="stage-pip">Data Model</div>
+      <div class="stage-pip">Header</div>
+      <div class="stage-pip">Entity Type</div>
+      <div class="stage-pip">Attribute</div>
+      <div class="stage-pip">Relationship</div>
+      <div class="stage-pip">Hierarchy</div>
+      <div class="stage-pip">BOTC</div>
+      <div class="stage-pip">Entity ↔ BOTC</div>
+      <div class="stage-pip">Keys</div>
+      <div class="stage-pip">Authorization</div>
+      <div class="stage-pip">Structures</div>
+      <div class="stage-pip">Active vs Staging</div>
+      <div class="stage-pip">Mappings</div>
+      <div class="stage-pip active">Extending</div>
+      <div class="stage-pip">Standard Models</div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What is it</div>
+          <h3>Extending SMT Mappings</h3>
+        </div>
+      </div>
+      <p>When your business needs a field that SAP doesn't ship — say, a "Hazard Class Code" on materials or a "Loyalty Tier" on customers — you don't modify standard data models. You <strong>extend</strong> them. Extending means: add your custom field to the ERP table (via append structure), add the matching attribute to the MDG data model, regenerate structures, and finally <em>extend the SMT mapping</em> so the new field round-trips correctly.</p>
+      <p>This is the most common customization activity in MDG projects.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon why">Y</div>
+        <div>
+          <div class="sub-block-title">Why we extend instead of modify</div>
+          <h3>Why extension is the SAP-approved approach</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Upgrade safety</strong> — SAP can deliver new versions of MM, BP, 0G; your extensions stay intact because they live in customer namespace.</li>
+        <li><strong>Transport-friendly</strong> — extensions are tracked separately, easy to move across landscapes.</li>
+        <li><strong>Reusability</strong> — extending standard models means you keep all the SAP-delivered behavior (validations, BAdIs, UI configs) and just add fields on top.</li>
+        <li><strong>Audit clarity</strong> — extensions are clearly labeled as customer-specific.</li>
+      </ul>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">The extension sequence</div>
+          <h3>The five-step procedure for adding a custom field</h3>
+        </div>
+      </div>
+      <ol class="numbered">
+        <li><strong>Extend the ERP Table</strong> — use append structure (SE11) to add the field to MARA or BUT000 in customer namespace (ZZ-prefix).</li>
+        <li><strong>Extend the Data Model</strong> — in <code>USMD_MODEL</code>, add the attribute to the appropriate MDG entity, point it to the same data element.</li>
+        <li><strong>Regenerate Structures</strong> — re-run "Generate Data Model-Specific Structures" so the new attribute appears in the generated staging structure and field-property structure.</li>
+        <li><strong>Extend SMT Mapping</strong> — open SMT, add a row mapping your new ERP field to the new MDG staging attribute (for both directions — to-active and to-staging).</li>
+        <li><strong>Test</strong> — create a CR for the relevant business activity, confirm the field appears on the UI, save, approve, verify activation writes correctly to the ERP table.</li>
+      </ol>
+      <p style="margin-top:14px;">Skipping any step breaks the chain. Forgetting step 3 (regenerate) is the most common cause of "the field doesn't appear on the screen."</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Fields involved in the extension</div>
+          <h3>What you fill at each step</h3>
+        </div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-head">SMT mapping extension — fields</div>
+        <div class="field-row">
+          <div class="field-name">Source Field</div>
+          <div class="field-desc">The field name in the source structure (ERP for to-staging, MDG for to-active).</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Target Field</div>
+          <div class="field-desc">The field name in the target structure.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Transformation Rule</div>
+          <div class="field-desc">Optional. If the source and target have different formats (e.g., different units, different code values), specify a transformation. Otherwise, "1:1 copy" is the default.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">BAdI Implementation</div>
+          <div class="field-desc">For complex transformations (lookup tables, derivation logic), assign a BAdI implementation that runs at mapping time.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="what-if">
+      <p>If you can't extend, you can't customize. Every business has unique fields they need — without extension, MDG would be a take-it-or-leave-it product, useless for any company with non-trivial needs. Extension is what makes MDG practical in the real world.</p>
+    </div>
+
+    <div class="analogy">
+      <p>Think of buying a <strong>pre-built house</strong>. The architecture (standard data model) is fixed. But you can knock down a wall and add a study (extend the ERP table), update the floor plan to reflect it (extend the data model), redo the wiring diagram (regenerate structures), and tell the housekeeper where the new room is (extend SMT mapping) — without rebuilding the house from scratch. Extension is the renovation discipline of MDG.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon link">L</div>
+        <div>
+          <div class="sub-block-title">What it links to</div>
+          <h3>Extension's neighborhood</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>Touches</strong>: ERP table (append), <span class="term">Data Model</span> (new attribute), generated structures, <span class="term">SMT Mapping</span>.</li>
+        <li><strong>Often complements</strong>: BAdI implementations for custom logic.</li>
+        <li><strong>Critical for</strong>: every customer-specific MDG implementation.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ====================================================== -->
+  <!-- ============ SECTION 15: STANDARD DATA MODELS ======== -->
+  <!-- ====================================================== -->
+  <section id="s15">
+    <div class="section-head">
+      <div class="section-num">15</div>
+      <h2>Standard Data Models — MM · BP · 0G</h2>
+    </div>
+    <p class="section-subtitle">The three flagship SAP-delivered data models you'll work with most.</p>
+
+    <div class="stage-strip">
+      <div class="stage-pip">Data Model</div>
+      <div class="stage-pip">Header</div>
+      <div class="stage-pip">Entity Type</div>
+      <div class="stage-pip">Attribute</div>
+      <div class="stage-pip">Relationship</div>
+      <div class="stage-pip">Hierarchy</div>
+      <div class="stage-pip">BOTC</div>
+      <div class="stage-pip">Entity ↔ BOTC</div>
+      <div class="stage-pip">Keys</div>
+      <div class="stage-pip">Authorization</div>
+      <div class="stage-pip">Structures</div>
+      <div class="stage-pip">Active vs Staging</div>
+      <div class="stage-pip">Mappings</div>
+      <div class="stage-pip">Extending</div>
+      <div class="stage-pip active">Standard Models</div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon what">W</div>
+        <div>
+          <div class="sub-block-title">What you need to know</div>
+          <h3>The three big standard models — at a glance</h3>
+        </div>
+      </div>
+      <p>SAP ships three flagship data models with MDG. They cover the bulk of real-world master data governance needs:</p>
+      <ul class="bullet">
+        <li><strong>MM</strong> — Material Master (Reuse Mode)</li>
+        <li><strong>BP</strong> — Business Partner, including Customer / Supplier roles (Reuse Mode)</li>
+        <li><strong>0G</strong> — Financials, including Cost Center, Profit Center, Account, Hierarchies (Flex Mode)</li>
+      </ul>
+      <p>Each has its own personality — its own root entity, its own key tables, its own quirks. Understanding them is essential.</p>
+    </div>
+
+    <!-- ============ MM ============ -->
+    <h3 style="margin-top: 48px;">15.1 · MM — Material Master</h3>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Anatomy of the MM data model</div>
+          <h3>MM at a glance</h3>
+        </div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-head">MM data model characteristics</div>
+        <div class="field-row">
+          <div class="field-name">Root Entity</div>
+          <div class="field-desc"><code>MATERIAL</code> — represents one material master record (key: MATNR / MATERIAL_NUMBER).</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Storage Mode</div>
+          <div class="field-desc"><strong>Reuse Mode.</strong> Active data lives in the standard ERP material tables — your existing reports keep working unchanged.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Key Active Tables</div>
+          <div class="field-desc"><strong>MARA</strong> (general data) · <strong>MARC</strong> (plant data) · <strong>MBEW</strong> (valuation/accounting). MDG governs creates/changes; activation writes to these tables.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">BOTC</div>
+          <div class="field-desc"><code>194</code> — Material Business Object Type Code.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">CR Types Delivered</div>
+          <div class="field-desc"><code>MAT01</code> (Create) · <code>MAT02</code> (Change) · <code>MAT03</code> (Display) · <code>MATA</code> (Mass).</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Extension BAdI</div>
+          <div class="field-desc"><code>MDG_BS_MAT_API_SEGMENTS_EXT</code> — the standard extension hook for custom field logic in materials.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ BP ============ -->
+    <h3 style="margin-top: 48px;">15.2 · BP — Business Partner</h3>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Anatomy of the BP data model</div>
+          <h3>BP at a glance</h3>
+        </div>
+      </div>
+      <p>The BP data model unifies what used to be three separate masters in classic ERP — Business Partner, Customer, Supplier. In S/4HANA, BP is the only entry point; KNA1 and LFA1 are maintained automatically via CVI.</p>
+      <div class="field-table">
+        <div class="field-table-head">BP data model characteristics</div>
+        <div class="field-row">
+          <div class="field-name">Root Entity</div>
+          <div class="field-desc"><code>BP_HEADER</code> — represents one business partner record (key: BU_PARTNER / BP_ID).</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Storage Mode</div>
+          <div class="field-desc"><strong>Reuse Mode.</strong> Active data in BUT000 and related BP tables.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Key Active Tables</div>
+          <div class="field-desc"><strong>BUT000</strong> (BP header) · <strong>BUT020</strong> (addresses) · <strong>BUT100</strong> (roles). Plus, via CVI: <strong>KNA1</strong> (customer view) and <strong>LFA1</strong> (vendor view).</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">BOTC</div>
+          <div class="field-desc"><code>147</code> — Business Partner BOTC. <code>266</code> for Supplier role. Also <code>BUS1006</code> for SOA contexts.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">CR Types Delivered</div>
+          <div class="field-desc"><code>BP01</code>, <code>CUST1P</code>, <code>SUPP1P</code>, <code>BP02</code> and their family for change/display.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Integration Layer</div>
+          <div class="field-desc"><strong>CVI</strong> — Customer-Vendor Integration. Syncs BP records to/from classic customer (KNA1) and vendor (LFA1) tables.<br><strong>GenIL</strong> (Generic Interaction Layer) — used by older BP UI front-ends; in modern MDG, GenIL provides the runtime data access for some BP scenarios.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon use">U</div>
+        <div>
+          <div class="sub-block-title">Internal concept — BP roles</div>
+          <h3>One record, many roles</h3>
+        </div>
+      </div>
+      <p>A single BP record can simultaneously play multiple roles: General BP, Customer, Supplier, Employee, Contact Person. The role assignment is stored in BUT100. Each role can bring its own set of fields and screens. MDG's BP data model is designed to handle this multi-role nature natively — you don't create separate vendor and customer masters, you create one BP and assign roles.</p>
+    </div>
+
+    <!-- ============ 0G ============ -->
+    <h3 style="margin-top: 48px;">15.3 · 0G — Financials</h3>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon fields">F</div>
+        <div>
+          <div class="sub-block-title">Anatomy of the 0G data model</div>
+          <h3>0G at a glance</h3>
+        </div>
+      </div>
+      <p>0G is the financial reference-data model — cost centers, profit centers, accounts, account hierarchies, and consolidation structures. It is uniquely <strong>Flex Mode</strong>, edition-driven, and hierarchy-heavy.</p>
+      <div class="field-table">
+        <div class="field-table-head">0G data model characteristics</div>
+        <div class="field-row">
+          <div class="field-name">Storage Mode</div>
+          <div class="field-desc"><strong>Flex Mode.</strong> Active data lives in MDG-owned tables, not directly in ERP CO/FI tables. Activation pushes data out via the Master Data Mass Generation (MDMGX) tool when bringing changes into the operational system.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Edition-Driven</div>
+          <div class="field-desc"><strong>Everything in 0G is bound to Editions.</strong> A cost-center hierarchy for Q1 is a different edition from Q2. This enables planned future-dated changes that activate together at a fiscal cutover.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Key Entities</div>
+          <div class="field-desc"><code>CCTR</code> (Cost Center) · <code>CELEM</code> (Cost Element) · <code>PCTR</code> (Profit Center) · <code>ACCOUNT</code> (G/L Account) · plus hierarchy entities for each.</div>
+        </div>
+        <div class="field-row">
+          <div class="field-name">Master Data Load Tool</div>
+          <div class="field-desc"><code>MDMGX</code> — used to bulk-load initial financial master data into 0G, and to push approved 0G changes downstream to ERP CO/FI when needed.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon use">U</div>
+        <div>
+          <div class="sub-block-title">Why 0G is Flex Mode</div>
+          <h3>The architectural reason</h3>
+        </div>
+      </div>
+      <p>Financial reference data needs planning capability: "we want this new cost center structure to go live on April 1 next year." If 0G were Reuse Mode, every change would immediately update CO/FI tables — no planning room. By being Flex Mode + Edition-driven, 0G lets you:</p>
+      <ul class="bullet">
+        <li>Draft a new cost-center hierarchy for next quarter while the current one stays untouched.</li>
+        <li>Have multiple competing draft structures (different planning scenarios) coexist.</li>
+        <li>Activate the entire edition (potentially 100+ CRs) atomically on the target date.</li>
+        <li>Report on "what does our cost-center tree look like as of June 1?" — historical and future views.</li>
+      </ul>
+    </div>
+
+    <div class="what-if">
+      <p>Without standard data models, every MDG project would start from a blank canvas — defining materials, vendors, cost centers from scratch. SAP's pre-delivered MM, BP, and 0G models save months of work and bring proven integration with ERP, CVI, DRF, and BRF+. They are the starting point of almost every real MDG implementation.</p>
+    </div>
+
+    <div class="analogy">
+      <p>Think of these three models like the <strong>three flagship apps that come pre-installed on a new phone</strong>: Phone (MM — used by everyone, fundamental), Contacts (BP — central, identity-defining), Calendar (0G — time and planning oriented). You'll add your own apps over time (custom data models), but these three are the bedrock that supports the everyday experience.</p>
+    </div>
+
+    <div class="sub-block">
+      <div class="sub-block-header">
+        <div class="sub-block-icon link">L</div>
+        <div>
+          <div class="sub-block-title">What they link to</div>
+          <h3>The standard models' neighborhood</h3>
+        </div>
+      </div>
+      <ul class="bullet">
+        <li><strong>MM</strong> ↔ ERP MARA/MARC/MBEW (Reuse), CR Types MAT01/02/03/A, BOTC 194.</li>
+        <li><strong>BP</strong> ↔ BUT000/BUT020/BUT100 + CVI to KNA1/LFA1, CR Types BP01/CUST1P/SUPP1P, BOTCs 147/266.</li>
+        <li><strong>0G</strong> ↔ MDG-owned tables + Editions + MDMGX, hierarchy-heavy.</li>
+        <li>All three are extended via the procedure in Section 14 for customer-specific fields.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ====================================================== -->
+  <!-- ============ SECTION 16: BIG PICTURE ================ -->
+  <!-- ====================================================== -->
+  <section id="s16">
+    <div class="section-head">
+      <div class="section-num">16</div>
+      <h2>The Big Picture · Full Chain</h2>
+    </div>
+    <p class="section-subtitle">Bringing every Data Modeling concept together in one end-to-end view.</p>
+
+    <h3>The complete data modeling chain</h3>
+    <p>Here is how all 15 concepts you've just learned connect — in the order you'd actually configure them on a real project:</p>
+
+    <div class="path-block">
+1. <span class="terminal">Create Data Model</span> (USMD_MODEL): set header fields (ID, description, Active Area, Package).<br>
+2. <span class="terminal">Define Entity Types</span>: pick SU Type (1, 2, 3, 4), key assignment, hierarchy capability.<br>
+3. <span class="terminal">Add Attributes</span>: data elements, key flags, required flags, search relevance.<br>
+4. <span class="terminal">Define Relationships</span>: Leading / Qualifying / Referencing + cardinality.<br>
+5. <span class="terminal">Enable Hierarchies</span> if needed (edition-dependent or simple).<br>
+6. <span class="terminal">Define BOTCs</span> if creating custom data models; reuse 194/147/266 for standard.<br>
+7. <span class="terminal">Map Entity → BOTC</span>: tell MDG which entity is the primary for each BOTC.<br>
+8. <span class="terminal">Configure Temp Key Prefixes</span>: $-prefix for in-flight internal keys.<br>
+9. <span class="terminal">Mark Authorization Relevance</span>: flag entities/attributes, wire to R_USMD_* objects.<br>
+10. <span class="terminal">Generate Structures</span>: produce mandatory + optional ABAP DDIC artifacts.<br>
+11. <span class="terminal">Set up SMT Mappings</span> (Reuse Mode only): staging ↔ active translations.<br>
+12. <span class="terminal">Extend</span> as needed: append fields → re-generate → extend SMT.<br>
+13. <span class="terminal">Activate Data Model</span>: model goes live; CR Types can now reference it.<br>
+14. <span class="terminal">Verify</span>: SE11, MDG_DATA_MODEL, USMD_ADJUST_STAGING.
+    </div>
+
+    <h3>How Data Modeling feeds into Process Modeling</h3>
+    <p>Once a data model is activated, it becomes the foundation that Process Modeling reads:</p>
+    <ul class="bullet">
+      <li>A <strong>Change Request Type</strong> picks a <strong>Data Model</strong> and a <strong>Main Entity</strong> (a Type 1 entity from the data model).</li>
+      <li>A <strong>Business Activity</strong> references a <strong>BOTC</strong>, which resolves via the entity-BOTC mapping to a specific entity.</li>
+      <li>The <strong>UI Configuration</strong> for the CR uses the <strong>field-property structure</strong> generated by the data model.</li>
+      <li>The <strong>Workflow</strong> reads <strong>authorization flags</strong> on entities to determine who can act on which CR.</li>
+      <li>Activation of the CR uses the <strong>SMT Mapping</strong> (in Reuse Mode) to write back to ERP tables.</li>
+    </ul>
+
+    <h3>Mental model — the layered system</h3>
+    <div class="path-block">
+<span class="terminal">Bottom (foundation):</span>  Data Model · Entities · Attributes · Relationships · Hierarchies<br>
+<span class="terminal">Storage:</span>             Staging Area + Active Area (Reuse OR Flex)<br>
+<span class="terminal">Integration:</span>          BOTC · Entity↔BOTC · SMT Mapping · CVI · GenIL<br>
+<span class="terminal">Generation:</span>           Structures · Tables · Field Properties · Search · DRF<br>
+<span class="terminal">Security:</span>             Authorization (R_USMD_MOD · R_USMD_VAL · R_USMD_CRQ)<br>
+<span class="terminal">Top (process):</span>        Change Request Type · Business Activity · Workflow · UI
+    </div>
+
+    <h3>Quick reference — when to use what</h3>
+    <table style="width:100%; border-collapse: collapse; margin-top: 20px;">
+      <thead>
+        <tr style="background: var(--bg-3);">
+          <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--line-2);">If you need to...</th>
+          <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--line-2);">Then configure...</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding: 10px; border-bottom: 1px solid var(--line);">Add a new master data domain</td><td style="padding: 10px; border-bottom: 1px solid var(--line);">Create a new Data Model (Section 02)</td></tr>
+        <tr><td style="padding: 10px; border-bottom: 1px solid var(--line);">Add a new field to material</td><td style="padding: 10px; border-bottom: 1px solid var(--line);">Extend the MM model (Section 14)</td></tr>
+        <tr><td style="padding: 10px; border-bottom: 1px solid var(--line);">Decide where active data should live</td><td style="padding: 10px; border-bottom: 1px solid var(--line);">Set Active Area on the header (Section 02)</td></tr>
+        <tr><td style="padding: 10px; border-bottom: 1px solid var(--line);">Validate that a value exists</td><td style="padding: 10px; border-bottom: 1px solid var(--line);">Link the attribute's data element to a check table (Section 04)</td></tr>
+        <tr><td style="padding: 10px; border-bottom: 1px solid var(--line);">Auto-generate keys at activation</td><td style="padding: 10px; border-bottom: 1px solid var(--line);">Set Internal Key Assignment + Number Range + Temp Prefix (Sections 03, 09)</td></tr>
+        <tr><td style="padding: 10px; border-bottom: 1px solid var(--line);">Restrict access to sensitive entities</td><td style="padding: 10px; border-bottom: 1px solid var(--line);">Mark Authorization Relevance (Section 10)</td></tr>
+        <tr><td style="padding: 10px; border-bottom: 1px solid var(--line);">Set up financial reference data with planning</td><td style="padding: 10px; border-bottom: 1px solid var(--line);">Use 0G model (Flex + Edition) (Section 15.3)</td></tr>
+        <tr><td style="padding: 10px;">Make a tree of cost centers</td><td style="padding: 10px;">Hierarchy on CCTR entity (Section 06)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Final thought</h3>
+    <p style="font-family: 'Fraunces', serif; font-style: italic; font-size: 18px; line-height: 1.6; color: var(--accent-2); margin-top: 24px;">Data Modeling is the foundation; Process Modeling is the building. Get the foundation right — the right entities, the right SU Types, the right Active Area, the right mappings — and everything above it works smoothly. Get it wrong, and no amount of workflow tuning will save you. This is why every MDG project starts here.</p>
+  </section>
+
+  <footer>
+    <p>END OF GUIDE · MDG Data Modeling · Deep Dive Edition</p>
+    <p style="margin-top:8px;">Companion to the Process Modeling guide · Together they cover the full MDG configuration surface</p>
+  </footer>
+
+</div>
+
+<script>
+  // progress bar
+  document.addEventListener('scroll', () => {
+    const h = document.documentElement;
+    const p = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+    const el = document.getElementById('progress');
+    if (el) el.style.width = p + '%';
+  });
+
+  // tabs
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tabsRoot = btn.closest('section');
+      tabsRoot.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      tabsRoot.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      const target = tabsRoot.querySelector('#tab-' + btn.dataset.tab);
+      if (target) target.classList.add('active');
+    });
+  });
+
+  // accordion
+  document.querySelectorAll('.accordion-header').forEach(h => {
+    h.addEventListener('click', () => {
+      h.parentElement.classList.toggle('open');
+    });
+  });
+
+  // quiz
+  document.querySelectorAll('.quiz').forEach(q => {
+    const correct = parseInt(q.dataset.correct);
+    const opts = q.querySelectorAll('.quiz-opt');
+    const feedback = q.querySelector('.quiz-feedback');
+    opts.forEach((opt, i) => {
+      opt.addEventListener('click', () => {
+        if (q.dataset.answered === 'true') return;
+        q.dataset.answered = 'true';
+        if (i === correct) opt.classList.add('correct');
+        else { opt.classList.add('wrong'); opts[correct].classList.add('correct'); }
+        feedback.classList.add('show');
+        opts.forEach(o => o.style.cursor = 'default');
+      });
+    });
+  });
+</script>
+
+</body>
+</html>
